@@ -22,15 +22,21 @@ function nextStage(): void {
   <section class="stage panel">
     <h2 class="panel__title">스테이지</h2>
     <div class="stage__controls">
-      <button class="btn btn--secondary stage__arrow" :disabled="stage.currentStage <= 1" @click="prevStage">
+      <button
+        class="btn btn--secondary stage__arrow"
+        data-testid="stage-prev"
+        :disabled="stage.currentStage <= 1"
+        @click="prevStage"
+      >
         ◀
       </button>
       <div class="stage__info">
-        <span class="stage__current">{{ stage.currentStage }}</span>
+        <span class="stage__current" data-testid="stage-panel-current">{{ stage.currentStage }}</span>
         <span class="stage__cleared">최고 {{ stage.maxClearedStage }}</span>
       </div>
       <button
         class="btn btn--secondary stage__arrow"
+        data-testid="stage-next"
         :disabled="stage.currentStage >= stage.maxClearedStage"
         @click="nextStage"
       >

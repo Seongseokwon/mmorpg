@@ -89,14 +89,14 @@ watch(
       </div>
 
       <div class="modal__rates">
-        <span>성공률: {{ useScroll ? successRateWithScroll : successRate }}%</span>
+        <span data-testid="enhance-rate-text">성공률: {{ useScroll ? successRateWithScroll : successRate }}%</span>
         <label class="modal__scroll">
-          <input v-model="useScroll" type="checkbox" :disabled="scrollCount <= 0" />
+          <input v-model="useScroll" type="checkbox" data-testid="enhance-scroll-toggle" :disabled="scrollCount <= 0" />
           주문서 사용 ({{ scrollCount }}개, +15%)
         </label>
       </div>
 
-      <div class="modal__cost">비용: 🌙 {{ enhanceCost().toLocaleString() }}</div>
+      <div class="modal__cost" data-testid="enhance-cost-text">비용: 🌙 {{ enhanceCost().toLocaleString() }}</div>
 
       <div
         v-if="resultText"
@@ -110,12 +110,13 @@ watch(
       <div class="modal__actions">
         <button
           class="btn btn--gold modal__btn"
+          data-testid="enhance-confirm"
           :disabled="gold < enhanceCost() || isAnimating || (useScroll && scrollCount <= 0)"
           @click="enhance"
         >
           {{ isAnimating ? '강화 중...' : '강화하기' }}
         </button>
-        <button class="btn btn--secondary modal__btn" @click="emit('close')">닫기</button>
+        <button class="btn btn--secondary modal__btn" data-testid="enhance-close" @click="emit('close')">닫기</button>
       </div>
     </div>
   </div>

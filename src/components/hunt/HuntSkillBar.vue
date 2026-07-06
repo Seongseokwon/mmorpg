@@ -16,6 +16,7 @@ function getIcon(skillId: string): string {
     <button
       class="skill-bar__auto hunt-glass"
       :class="{ 'skill-bar__auto--on': battle.isAutoBattle }"
+      data-testid="auto-battle-toggle"
       @click="battle.toggleAutoBattle()"
     >
       <span class="overlay-text">{{ battle.isAutoBattle ? 'AUTO' : '수동' }}</span>

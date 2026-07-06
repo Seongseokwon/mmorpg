@@ -9,7 +9,7 @@ function claim(): void {
 </script>
 
 <template>
-  <div v-if="reward.showOfflineModal" class="modal-overlay">
+  <div v-if="reward.showOfflineModal" class="modal-overlay" data-testid="offline-modal">
     <div class="modal panel">
       <h3 class="modal__title">💤 오프라인 보상</h3>
       <p class="modal__subtitle">
@@ -25,7 +25,7 @@ function claim(): void {
           <span>{{ reward.offlineReward.exp.toLocaleString() }}</span>
         </div>
       </div>
-      <button class="btn btn--gold modal__btn" @click="claim">받기</button>
+      <button class="btn btn--gold modal__btn" data-testid="offline-claim" @click="claim">받기</button>
     </div>
   </div>
 </template>

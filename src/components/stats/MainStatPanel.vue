@@ -14,7 +14,7 @@ function allocate(statId: MainStatId): void {
   <section class="main-stat panel">
     <div class="main-stat__header">
       <h2 class="panel__title">주 스탯</h2>
-      <span v-if="player.statPoints > 0" class="main-stat__points">
+      <span v-if="player.statPoints > 0" class="main-stat__points" data-testid="main-stat-points">
         포인트 {{ player.statPoints }}
       </span>
     </div>
@@ -35,10 +35,11 @@ function allocate(statId: MainStatId): void {
         :key="stat.id"
         class="main-stat__btn"
         :disabled="player.statPoints <= 0"
+        :data-testid="`stat-alloc-${stat.id}`"
         @click="allocate(stat.id)"
       >
         <span class="main-stat__btn-name">{{ stat.shortName }}</span>
-        <span class="main-stat__btn-value">{{ player.mainStats[stat.id] }}</span>
+        <span class="main-stat__btn-value" :data-testid="`stat-value-${stat.id}`">{{ player.mainStats[stat.id] }}</span>
         <span class="main-stat__btn-effect">{{ stat.effectPerPoint }}</span>
       </button>
     </div>

@@ -25,7 +25,7 @@ function handleAction(skillId: string, level: number): void {
   <section class="skill panel">
     <h2 class="panel__title">스킬</h2>
     <ul class="skill__list">
-      <li v-for="s in skill.skills" :key="s.id" class="skill__item">
+      <li v-for="s in skill.skills" :key="s.id" class="skill__item" :data-testid="`skill-item-${s.id}`">
         <div class="skill__header">
           <span class="skill__icon">{{ getDefIcon(s.id) }}</span>
           <div class="skill__info">
@@ -34,7 +34,7 @@ function handleAction(skillId: string, level: number): void {
               {{ s.level > 0 ? `x${s.damageMultiplier.toFixed(1)} 피해` : `Stage ${s.unlockStage} 해금` }}
             </span>
           </div>
-          <span v-if="s.level > 0" class="skill__level">Lv.{{ s.level }}</span>
+          <span v-if="s.level > 0" class="skill__level" :data-testid="`skill-level-${s.id}`">Lv.{{ s.level }}</span>
         </div>
 
         <div v-if="s.level > 0 && stage.currentStage >= s.unlockStage" class="skill__cooldown">
@@ -49,6 +49,7 @@ function handleAction(skillId: string, level: number): void {
         <button
           class="btn skill__btn"
           :class="s.level === 0 ? 'btn--secondary' : 'btn--gold'"
+          :data-testid="`skill-action-${s.id}`"
           :disabled="
             s.level === 0
               ? stage.currentStage < s.unlockStage || currency.gold < 100

@@ -26,6 +26,7 @@ const currency = useCurrencyStore()
     <div class="gacha__actions">
       <button
         class="btn btn--gold gacha__btn"
+        data-testid="gacha-pull-single"
         :disabled="currency.gold < GACHA_SINGLE_COST"
         @click="gacha.pullSingle()"
       >
@@ -34,6 +35,7 @@ const currency = useCurrencyStore()
       </button>
       <button
         class="btn btn--primary gacha__btn"
+        data-testid="gacha-pull-multi"
         :disabled="currency.gold < GACHA_MULTI_COST"
         @click="gacha.pullMulti()"
       >

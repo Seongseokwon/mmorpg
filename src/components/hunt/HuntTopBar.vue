@@ -30,13 +30,13 @@ const combatPower = computed(
     </div>
 
     <div class="top-bar__stage">
-      <span class="top-bar__stage-map overlay-text">사냥터 {{ stage.currentStage }}</span>
+      <span class="top-bar__stage-map overlay-text" data-testid="stage-current">사냥터 {{ stage.currentStage }}</span>
       <span class="top-bar__stage-progress overlay-text">{{ stageProgress }}/3</span>
     </div>
 
     <div class="top-bar__currency">
       <span class="top-bar__currency-icon">🌙</span>
-      <span class="top-bar__currency-value overlay-text">{{ currency.formattedGold }}</span>
+      <span class="top-bar__currency-value overlay-text" data-testid="currency-gold">{{ currency.formattedGold }}</span>
     </div>
   </header>
 </template>

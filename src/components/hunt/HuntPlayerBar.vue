@@ -6,21 +6,21 @@ const player = usePlayerStore()
 
 <template>
   <div class="player-bar hunt-glass">
-    <span class="player-bar__level overlay-text">Lv.{{ player.level }}</span>
+    <span class="player-bar__level overlay-text" data-testid="player-level">Lv.{{ player.level }}</span>
     <div class="player-bar__bars">
       <div class="bar-row">
         <span class="bar-label">HP</span>
         <div class="bar-track bar-track--hp">
           <div class="bar-fill bar-fill--hp" :style="{ width: `${player.hpPercent}%` }" />
         </div>
-        <span class="bar-value overlay-text">{{ player.hp }}</span>
+        <span class="bar-value overlay-text" data-testid="player-hp">{{ player.hp }}</span>
       </div>
       <div class="bar-row">
         <span class="bar-label">EXP</span>
         <div class="bar-track bar-track--exp">
           <div class="bar-fill bar-fill--exp" :style="{ width: `${player.expPercent}%` }" />
         </div>
-        <span class="bar-value overlay-text">{{ player.expPercent }}%</span>
+        <span class="bar-value overlay-text" data-testid="player-exp">{{ player.expPercent }}%</span>
       </div>
     </div>
   </div>

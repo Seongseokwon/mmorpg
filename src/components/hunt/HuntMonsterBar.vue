@@ -5,10 +5,10 @@ const battle = useBattleStore()
 </script>
 
 <template>
-  <div v-if="battle.targetMonster" class="monster-bar hunt-glass">
+  <div v-if="battle.targetMonster" class="monster-bar hunt-glass" data-testid="monster-bar">
     <div class="monster-bar__header">
-      <span class="monster-bar__name overlay-text">{{ battle.targetMonster.name }}</span>
-      <span class="monster-bar__hp overlay-text">{{ battle.targetMonster.hp }}/{{ battle.targetMonster.maxHp }}</span>
+      <span class="monster-bar__name overlay-text" data-testid="monster-name">{{ battle.targetMonster.name }}</span>
+      <span class="monster-bar__hp overlay-text" data-testid="monster-hp">{{ battle.targetMonster.hp }}/{{ battle.targetMonster.maxHp }}</span>
     </div>
     <div class="monster-bar__track">
       <div

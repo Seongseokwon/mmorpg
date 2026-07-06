@@ -14,10 +14,10 @@ const emit = defineEmits<{ close: [] }>()
   <Teleport to="body">
     <Transition name="sheet">
       <div v-if="open" class="sheet-overlay" @click.self="emit('close')">
-        <div class="sheet hunt-glass">
+        <div class="sheet hunt-glass" data-testid="game-sheet">
           <header class="sheet__header">
             <h2 class="sheet__title overlay-text">{{ title }}</h2>
-            <button class="sheet__close" @click="emit('close')">✕</button>
+            <button class="sheet__close" data-testid="sheet-close" @click="emit('close')">✕</button>
           </header>
           <div class="sheet__body">
             <slot />

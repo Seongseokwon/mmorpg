@@ -12,15 +12,15 @@ function claim(): void {
 <template>
   <section class="daily panel">
     <h2 class="panel__title">일일 보상</h2>
-    <p class="daily__streak">
+    <p class="daily__streak" data-testid="daily-streak">
       연속 출석 <strong>{{ reward.dailyReward.streak }}</strong>일
       <span v-if="!reward.canClaimDaily"> · 오늘 수령 완료</span>
     </p>
 
-    <div class="daily__today" v-if="reward.canClaimDaily">
+    <div class="daily__today" v-if="reward.canClaimDaily" data-testid="daily-claim-box">
       <span class="daily__today-label">오늘의 보상</span>
       <span class="daily__today-value">{{ reward.todayReward.label }}</span>
-      <button class="btn btn--gold daily__claim" @click="claim">보상 받기</button>
+      <button class="btn btn--gold daily__claim" data-testid="daily-claim" @click="claim">보상 받기</button>
     </div>
 
     <ul class="daily__calendar">

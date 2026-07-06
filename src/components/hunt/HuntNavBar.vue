@@ -26,6 +26,7 @@ const navItems: { id: NavId; label: string; icon: string }[] = [
       :key="item.id"
       class="nav-bar__btn"
       :class="{ 'nav-bar__btn--active': active === item.id }"
+      :data-testid="`nav-${item.id}`"
       @click="emit('select', item.id)"
     >
       <span class="nav-bar__icon">{{ item.icon }}</span>

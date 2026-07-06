@@ -66,7 +66,13 @@ function usePotion(): void {
           </span>
           <span class="inventory__range">옵션 {{ getRangeText(item) }}</span>
         </div>
-        <button class="btn btn--primary inventory__action" @click="equipItem(item)">장착</button>
+        <button
+          class="btn btn--primary inventory__action"
+          data-testid="inventory-equip"
+          @click="equipItem(item)"
+        >
+          장착
+        </button>
       </li>
     </ul>
 

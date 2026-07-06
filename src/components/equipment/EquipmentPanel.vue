@@ -56,6 +56,7 @@ function getRangeText(item: NonNullable<typeof equipment.equipped.weapon>): stri
         :key="slot"
         class="equipment__slot"
         :class="{ 'equipment__slot--empty': !equipment.equipped[slot] }"
+        :data-testid="`equipment-slot-${slot}`"
       >
         <template v-if="equipment.equipped[slot]">
           <div class="equipment__header">
@@ -67,19 +68,29 @@ function getRangeText(item: NonNullable<typeof equipment.equipped.weapon>): stri
               >
                 {{ equipment.equipped[slot]!.name }}
               </span>
-              <span class="equipment__meta">
+              <span class="equipment__meta" :data-testid="`equipment-level-${slot}`">
                 +{{ equipment.equipped[slot]!.enhanceLevel }}
                 · {{ RARITY_LABELS[equipment.equipped[slot]!.rarity] }}
               </span>
             </div>
           </div>
-          <span class="equipment__stat">{{ getStat(equipment.equipped[slot]!) }}</span>
+          <span class="equipment__stat" :data-testid="`equipment-stat-${slot}`">{{ getStat(equipment.equipped[slot]!) }}</span>
           <span class="equipment__range">{{ getRangeText(equipment.equipped[slot]!) }}</span>
           <div class="equipment__actions">
-            <button class="btn btn--gold equipment__btn" @click="openEnhance(slot)">
+            <button
+              class="btn btn--gold equipment__btn"
+              :data-testid="`equip-enhance-${slot}`"
+              @click="openEnhance(slot)"
+            >
               강화 🌙{{ getEnhanceCost(equipment.equipped[slot]!).toLocaleString() }}
             </button>
-            <button class="btn btn--secondary equipment__btn" @click="unequip(slot)">해제</button>
+            <button
+              class="btn btn--secondary equipment__btn"
+              :data-testid="`equip-unequip-${slot}`"
+              @click="unequip(slot)"
+            >
+              해제
+            </button>
           </div>
         </template>
         <template v-else>

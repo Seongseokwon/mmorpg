@@ -42,6 +42,7 @@ function claim(id: string): void {
         <button
           v-if="ach.canClaim"
           class="btn btn--gold achievement__claim"
+          :data-testid="`achievement-claim-${ach.id}`"
           @click="claim(ach.id)"
         >
           수령
