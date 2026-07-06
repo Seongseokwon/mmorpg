@@ -9,10 +9,13 @@
 
 ## 🔥 Critical 버그 (최우선 수정 대상)
 
-- [ ] **강화 +15(`MAX_ENHANCE_LEVEL`) 캡이 UI에 반영 안 됨** — `equipmentService.ts:112-131`
+- [x] **강화 +15(`MAX_ENHANCE_LEVEL`) 캡이 UI에 반영 안 됨** — `equipmentService.ts:112-131`
   (`getEnhanceSuccessRate`, `rollEnhanceSuccess`), `EquipmentPanel.vue:79`, `EnhanceModal.vue:113`.
   최대 강화 레벨에서도 버튼이 활성 상태고 성공률이 25%로 표시되지만 실제로는 100% 실패 —
-  유저가 확률을 믿고 재화를 계속 태움. 회귀 테스트: `tests/e2e/regression/enhance-max-level.spec.ts`.
+  유저가 확률을 믿고 재화를 계속 태움. **2026-07-06 수정 완료** — `MAX_ENHANCE_LEVEL`을 15 → 20으로
+  상향하면서 `getEnhanceSuccessRate()`가 캡 이상에서 0%를 반환하도록, `EnhanceModal`의 강화 버튼이
+  캡 도달 시 비활성화("최대 레벨" 표시)되도록 수정. 회귀 테스트:
+  `tests/e2e/regression/enhance-max-level.spec.ts` (통과 확인).
 - [x] **`compareEquipment()` 비교 방향이 반대라 `autoEquipIfBetter()`가 좋은 장비를 나쁜 드롭으로
   교체함** — `equipmentService.ts:222-226`, `equipment.store.ts:65`. 장비 스코어가 높을수록 오히려
   몬스터 드롭에 더 쉽게 교체됨 — 성장 루프 핵심 투자를 조용히 무효화. **2026-07-06 수정 완료**

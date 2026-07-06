@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-07-06 (4) — 강화 +15 캡 UI 미반영 수정 + 최대 강화 레벨 +20으로 상향
+
+`equipmentService.ts`의 `MAX_ENHANCE_LEVEL`을 15 → 20으로 상향(요청: "최대강화도 +20까지 될 수 있도록").
+기존엔 `rollEnhanceSuccess()`만 캡을 알고 `getEnhanceSuccessRate()`는 몰라서, 캡 도달 후에도 UI에
+25%(스크롤 사용 시 40%) 성공률이 표시되고 강화 버튼이 활성 상태로 남아 유저가 재화를 계속 태울 수
+있었다. 수정 내용:
+
+- `getEnhanceSuccessRate()`: `enhanceLevel >= MAX_ENHANCE_LEVEL`이면 0% 반환하도록 최상단에 캡 체크 추가.
+  캡을 15 → 20으로 늘리며 15/18 구간 확률 티어(15%, 10%)도 새로 추가(기존엔 12구간 25%가 마지막이었음).
+- `MAX_ENHANCE_LEVEL`을 모듈 밖으로 export.
+- `EnhanceModal.vue`: `isMaxed` computed 추가, 확인 버튼을 캡 도달 시 비활성화 + 라벨을 "최대 레벨"로
+  변경(스킬 패널의 `s.level >= s.maxLevel` 패턴과 동일하게 맞춤 — `SkillPanel.vue:61` 참고).
+- `EquipmentPanel.vue`: 캡 도달 시 강화 버튼 라벨을 비용 대신 "최대 강화 (+20)"로 표시(버튼 자체는
+  계속 클릭 가능 — 모달을 열어 0%/비활성화 상태를 직접 확인할 수 있게 둠).
+
+`tests/e2e/regression/enhance-max-level.spec.ts`를 새 캡(+20) 기준으로 재작성 — 기존 `test.fail()`
+마킹 및 "현재 버그 동작 문서화" 테스트 제거, "+20 캡 도달 시 비활성화" + "+19는 정상 강화 가능(캡
+상향 확인)" 두 케이스로 교체. `growth/*`, `regression/*` 전체 재실행 + `vue-tsc --noEmit` 통과 확인 —
+회귀 없음. 남은 실패는 `daily-reward-timezone`(별개의 미수정 버그, 의도된 `test.fail()`)뿐.
+
+---
+
 ## 2026-07-06 (3) — `compareEquipment()` 반전 버그 수정
 
 `equipmentService.ts:222-226`의 `compareEquipment(a, b)`가 `scoreB - scoreA`를 반환하던 것을

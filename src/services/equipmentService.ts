@@ -16,7 +16,7 @@ const RARITY_WEIGHTS: { rarity: EquipmentRarity; weight: number }[] = [
 ]
 
 const ENHANCE_BONUS_PER_LEVEL = 0.1
-const MAX_ENHANCE_LEVEL = 15
+export const MAX_ENHANCE_LEVEL = 20
 
 interface RolledStat {
   value: number
@@ -113,11 +113,14 @@ export function getEnhanceSuccessRate(
   equipment: Equipment,
   useScroll: boolean
 ): number {
+  if (equipment.enhanceLevel >= MAX_ENHANCE_LEVEL) return 0;
   let rate = 100;
   if (equipment.enhanceLevel >= 3) rate = 80;
   if (equipment.enhanceLevel >= 6) rate = 60;
   if (equipment.enhanceLevel >= 9) rate = 40;
   if (equipment.enhanceLevel >= 12) rate = 25;
+  if (equipment.enhanceLevel >= 15) rate = 15;
+  if (equipment.enhanceLevel >= 18) rate = 10;
   if (useScroll) rate = Math.min(100, rate + 15);
   return rate;
 }

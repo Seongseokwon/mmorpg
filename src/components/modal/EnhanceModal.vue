@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import gsap from 'gsap'
 import { RARITY_COLORS, RARITY_LABELS } from '@/data/gameData'
-import { getEnhanceCost } from '@/services/equipmentService'
+import { getEnhanceCost, MAX_ENHANCE_LEVEL } from '@/services/equipmentService'
 import { useEquipmentStore } from '@/stores/equipment.store'
 import type { Equipment, EquipmentSlot } from '@/types/game'
 
@@ -25,8 +25,10 @@ const isAnimating = ref(false)
 const resultRef = ref<HTMLElement | null>(null)
 
 const enhanceCost = () => getEnhanceCost(props.item)
+const isMaxed = computed(() => props.item.enhanceLevel >= MAX_ENHANCE_LEVEL)
 
 function enhance(): void {
+  if (isMaxed.value) return
   if (isAnimating.value) return
   if (props.gold < enhanceCost()) return
   if (useScroll.value && props.scrollCount <= 0) return
@@ -111,10 +113,11 @@ watch(
         <button
           class="btn btn--gold modal__btn"
           data-testid="enhance-confirm"
-          :disabled="gold < enhanceCost() || isAnimating || (useScroll && scrollCount <= 0)"
+          :disabled="isMaxed || gold < enhanceCost() || isAnimating || (useScroll && scrollCount <= 0)"
           @click="enhance"
         >
-          {{ isAnimating ? '강화 중...' : '강화하기' }}
+          <template v-if="isMaxed">최대 레벨</template>
+          <template v-else>{{ isAnimating ? '강화 중...' : '강화하기' }}</template>
         </button>
         <button class="btn btn--secondary modal__btn" data-testid="enhance-close" @click="emit('close')">닫기</button>
       </div>

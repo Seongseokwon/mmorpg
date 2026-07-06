@@ -6,6 +6,7 @@ import {
   getEnhanceCost,
   getEnhanceSuccessRate,
   getEquipmentStatRange,
+  MAX_ENHANCE_LEVEL,
 } from '@/services/equipmentService'
 import { useEquipmentStore } from '@/stores/equipment.store'
 import { useCurrencyStore } from '@/stores/currency.store'
@@ -45,6 +46,10 @@ function getRangeText(item: NonNullable<typeof equipment.equipped.weapon>): stri
   const range = getEquipmentStatRange(item)
   return `옵션 ${range.label} ${range.min}~${range.max}`
 }
+
+function isMaxEnhanced(item: NonNullable<typeof equipment.equipped.weapon>): boolean {
+  return item.enhanceLevel >= MAX_ENHANCE_LEVEL
+}
 </script>
 
 <template>
@@ -82,7 +87,8 @@ function getRangeText(item: NonNullable<typeof equipment.equipped.weapon>): stri
               :data-testid="`equip-enhance-${slot}`"
               @click="openEnhance(slot)"
             >
-              강화 🌙{{ getEnhanceCost(equipment.equipped[slot]!).toLocaleString() }}
+              <template v-if="isMaxEnhanced(equipment.equipped[slot]!)">최대 강화 (+{{ MAX_ENHANCE_LEVEL }})</template>
+              <template v-else>강화 🌙{{ getEnhanceCost(equipment.equipped[slot]!).toLocaleString() }}</template>
             </button>
             <button
               class="btn btn--secondary equipment__btn"
