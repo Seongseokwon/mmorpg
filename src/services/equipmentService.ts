@@ -222,5 +222,5 @@ export function getSkillUpgradeCost(level: number): number {
 export function compareEquipment(a: Equipment, b: Equipment): number {
   const scoreA = getEquipmentAttack(a) + getEquipmentHp(a) + a.enhanceLevel * 5;
   const scoreB = getEquipmentAttack(b) + getEquipmentHp(b) + b.enhanceLevel * 5;
-  return scoreB - scoreA;
+  return scoreA - scoreB;
 }

@@ -3,9 +3,34 @@
 이전 버전의 이 문서는 "세로 UI 레이아웃 진단"이었고 해당 항목(캔버스 비율, 상단 HUD, 스킬바, PC 대응 등)은
 모두 반영 완료됨. 이번 정리는 CLAUDE.md의 MVP Phase 기준으로 다시 잡은 로드맵.
 
-> "왜/뭐가 발견됐는지"에 대한 기록(QA 결과 등)은 [MEMORY.md](MEMORY.md)에 별도로 남긴다. **최우선 처리 대상
-> 2건**: 강화 +15 골드 낭비 버그, 그리고 `compareEquipment()` 비교 방향이 뒤집혀 있어 좋은 장비가 나쁜
-> 드롭으로 자동 교체되는 버그 — 둘 다 Critical.
+> "왜/뭐가 발견됐는지"에 대한 기록(QA 결과 등)은 [MEMORY.md](MEMORY.md)에 별도로 남긴다.
+
+---
+
+## 🔥 Critical 버그 (최우선 수정 대상)
+
+- [ ] **강화 +15(`MAX_ENHANCE_LEVEL`) 캡이 UI에 반영 안 됨** — `equipmentService.ts:112-131`
+  (`getEnhanceSuccessRate`, `rollEnhanceSuccess`), `EquipmentPanel.vue:79`, `EnhanceModal.vue:113`.
+  최대 강화 레벨에서도 버튼이 활성 상태고 성공률이 25%로 표시되지만 실제로는 100% 실패 —
+  유저가 확률을 믿고 재화를 계속 태움. 회귀 테스트: `tests/e2e/regression/enhance-max-level.spec.ts`.
+- [x] **`compareEquipment()` 비교 방향이 반대라 `autoEquipIfBetter()`가 좋은 장비를 나쁜 드롭으로
+  교체함** — `equipmentService.ts:222-226`, `equipment.store.ts:65`. 장비 스코어가 높을수록 오히려
+  몬스터 드롭에 더 쉽게 교체됨 — 성장 루프 핵심 투자를 조용히 무효화. **2026-07-06 수정 완료**
+  (`compareEquipment`가 `scoreA - scoreB`를 반환하도록 부호 수정). 회귀 테스트:
+  `tests/e2e/regression/auto-equip-inverted.spec.ts` (통과 확인).
+
+## 🟠 Major 버그
+
+- [ ] IndexedDB 접근 실패 시 예외 처리 전무 — `saveService.ts`, `save.store.ts:26-34`.
+  Safari 프라이빗 모드/쿼터 초과 시 `save.load()`가 catch 없이 던져 빈 화면에서 멈춤.
+- [ ] 일일 보상 리셋이 UTC 기준 — `rewardService.ts:90-98`. KST에서는 자정이 아니라 오전 9시에
+  리셋되어 스트릭 판정이 최대 9시간 어긋남.
+- [ ] `GameRenderer.destroy()`가 무한반복 gsap 트윈(`applyIdleBob()`)을 안 죽임 — `GameRenderer.ts:396-407`.
+  현재는 단일 마운트라 안전하지만 라우팅 도입 시 메모리 누수로 전환.
+- [ ] 탭을 백그라운드에 오래 둬도 오프라인 보상 재계산 안 됨 — `reward.store.ts:59-70`,
+  `useGameSession.ts`. `visibilitychange` 훅 없이 `save.load()` 성공 시 한 번만 계산됨.
+- [ ] `await` 이후 생성된 `watch()`가 unmount 시 정리 안 됨 — `useGameRenderer.ts:12-32`,
+  `useGameSession.ts:22-64`. 현재 단일 뷰라 안 터지지만 조건부 mount/unmount 도입 시 누수.
 
 ---
 
@@ -31,6 +56,9 @@
 | 3 | 빌드 청크 경고 | `vite build` 시 500KB+ 단일 청크 경고 — pixi.js 관련 코드 스플리팅 검토 필요 |
 | 4 | 몬스터 HP 미니바 | 현재 "가장 가까운 몬스터 1마리"만 화면 중앙에 표시. 4마리 동시 사냥 구조와 안 맞을 수 있음(개별 HP 바는 이후 UI 작업으로 보류 중) |
 | 5 | Vue Router 미설치 | 현재 단일 뷰(GameView)라 당장은 불필요하지만, 스택 문서와 실제 코드가 다름 — 추후 랭킹/로그인 화면 생기면 필요 |
+| 6 | `save.store.ts:21`의 `saveTimer`가 모듈 전역 변수 | CLAUDE.md 자체 규칙("Global mutable state 금지") 위반 |
+| 7 | 탭 종료/새로고침 시 최근 최대 1초 상태 유실 가능 | `scheduleSave` 1초 디바운스, `beforeunload` 대응 없음 |
+| 8 | 다중 몬스터(최대 4) + 스킬 광역 도입 이후 스테이지 속도 재검토 | 몬스터 HP/EXP 곡선이 1:1 전투 기준으로 설계되어 밸런스 재검토 필요 |
 
 ---
 

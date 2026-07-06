@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-07-06 (3) — `compareEquipment()` 반전 버그 수정
+
+`equipmentService.ts:222-226`의 `compareEquipment(a, b)`가 `scoreB - scoreA`를 반환하던 것을
+`scoreA - scoreB`로 수정. 호출부(`equipment.store.ts:65`의 `autoEquipIfBetter`)는 코드 변경 없이
+"양수면 a(신규 드롭)가 더 좋다"는 표준 컨벤션에 맞춰짐. 호출부가 한 곳뿐이라 함수 자체를 고치는 쪽을
+택함(호출부를 고쳤다면 나중에 또 헷갈릴 여지가 있었음).
+
+`tests/e2e/regression/auto-equip-inverted.spec.ts`의 `test.fail()` 마킹 제거, 통과 확인.
+`tests/e2e/growth/*`, `tests/e2e/regression/*` 전체 재실행 결과 회귀 없음 — 나머지 실패 2건
+(`daily-reward-timezone`, `enhance-max-level`)은 별개의 미수정 버그로 의도된 `test.fail()`.
+
+남은 Critical 1건(강화 +15 캡 UI 미반영)은 TODO.md 참고.
+
+---
+
 ## 2026-07-06 (2) — Playwright E2E 풀 테스트 구축 (`.claude/agents/e2e-agent.md` 페르소나 기준)
 
 `tests/e2e/`에 Playwright 스펙 34개(desktop-chromium + mobile-chromium(Pixel 7))를 새로 만들었다.

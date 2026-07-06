@@ -5,20 +5,14 @@ import { buildEquipment, buildSaveData } from '../../fixtures/save-data'
 /**
  * 발견 경위: equipment-enhancement.spec.ts에서 "아무 드롭도 이길 수 없는" baseAttack 9999짜리
  * 무기를 시딩해뒀는데도, 자동전투가 잠깐 도는 사이 흔한 커먼 드롭으로 교체되는 현상이 재현됐다.
- * equipmentService.ts의 compareEquipment(a, b)는 "scoreB - scoreA"를 반환하는데,
- * equipment.store.ts의 autoEquipIfBetter()는 compareEquipment(신규드롭, 현재장비) > 0 을
- * "신규 드롭이 더 좋다"는 뜻으로 쓰고 있다. 하지만 실제로는 scoreB(현재장비) - scoreA(신규드롭) > 0,
- * 즉 "현재 장비가 더 좋을 때" 참이 되어 버려서 로직이 통째로 뒤집혀 있다.
- * 결과: 좋은 장비일수록 더 쉽게 나쁜 드롭으로 교체되고, 나쁜 장비는 오히려 안 바뀐다.
+ * equipmentService.ts의 compareEquipment(a, b)가 "scoreB - scoreA"를 반환해서, "신규 드롭이 더
+ * 좋다"는 뜻으로 쓰던 equipment.store.ts의 autoEquipIfBetter() 비교 방향이 뒤집혀 있었다.
+ * equipmentService.ts:222-226에서 scoreA - scoreB로 수정 완료 (2026-07-06).
  */
 test.describe('회귀: 장비 자동교체(autoEquipIfBetter) 비교 로직이 거꾸로 되어 있음', () => {
   test(
     '압도적으로 강한 무기가 장착되어 있으면, 훨씬 약한 새 드롭으로 교체되면 안 된다',
     async ({ page }) => {
-      // equipmentService.ts:222-226 compareEquipment()의 반환값 부호가 반대라, 지금은 이 테스트가
-      // "실패"하는 게 정상이다 — 즉 실제로는 강한 무기가 약한 드롭으로 교체돼 버린다.
-      test.fail(true, 'compareEquipment()가 scoreB - scoreA를 반환해 비교 방향이 뒤집혀 있음')
-
       await seedSaveAndReload(
         page,
         buildSaveData({
