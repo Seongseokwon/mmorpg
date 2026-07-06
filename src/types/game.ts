@@ -1,0 +1,165 @@
+export type MainStatId = 'str' | 'vit' | 'dex' | 'luk'
+export type SubStatId = 'crit_rate' | 'crit_damage' | 'attack_speed' | 'meso_bonus' | 'drop_rate'
+
+export interface MainStats {
+  str: number
+  vit: number
+  dex: number
+  luk: number
+}
+
+export interface SubStatLevels {
+  crit_rate: number
+  crit_damage: number
+  attack_speed: number
+  meso_bonus: number
+  drop_rate: number
+}
+export type EquipmentSlot = 'weapon' | 'armor'
+export type EquipmentRarity = 'common' | 'uncommon' | 'rare' | 'epic'
+export type StatGrade = 'low' | 'normal' | 'high' | 'perfect'
+
+export interface Equipment {
+  id: string
+  name: string
+  slot: EquipmentSlot
+  rarity: EquipmentRarity
+  enhanceLevel: number
+  baseAttack: number
+  baseHp: number
+  /** 드롭 시 굴려진 주 스탯의 등급 (무기=ATK, 방어구=HP) */
+  statGrade: StatGrade
+}
+
+export interface ConsumableItem {
+  id: string
+  type: 'potion' | 'scroll'
+  name: string
+  quantity: number
+  description: string
+}
+
+export interface Skill {
+  id: string
+  name: string
+  description: string
+  level: number
+  maxLevel: number
+  cooldownMs: number
+  damageMultiplier: number
+  unlockStage: number
+}
+
+export interface PlayerStats {
+  level: number
+  exp: number
+  statPoints: number
+  mainStats: MainStats
+  attack: number
+  maxHp: number
+  hp: number
+}
+
+export interface Monster {
+  id: string
+  name: string
+  maxHp: number
+  hp: number
+  attack: number
+  goldReward: number
+  sprite: string
+  /** 사냥터 내 배회 위치 (0~1 정규화 좌표, 작을수록 플레이어와 가깝다) */
+  x: number
+  /** 현재 이동 중인 목적지 (도착하면 새 목적지를 무작위로 다시 정한다) */
+  targetX: number
+  /** 개체별 배회 속도 (초당 이동하는 정규화 거리) */
+  speed: number
+  /** 목적지로 실제 이동 중인지 여부 (렌더러의 걷기 애니메이션 트리거용) */
+  moving: boolean
+  /** 목적지 도착 후 다음 이동 전까지 잠시 멈춰있는 남은 시간(ms) */
+  pauseMs: number
+}
+
+export interface SaveData {
+  version: number
+  gold: number
+  level: number
+  exp: number
+  statPoints: number
+  mainStats: MainStats
+  subStats: SubStatLevels
+  currentStage: number
+  maxClearedStage: number
+  equipmentBag: Equipment[]
+  equippedWeapon: Equipment | null
+  equippedArmor: Equipment | null
+  consumables: ConsumableItem[]
+  skills: { id: string; level: number }[]
+  gachaPity: number
+  achievements: Record<string, AchievementProgress>
+  dailyReward: DailyRewardState
+  meta: MetaStats
+  lastActiveAt: number
+  /** v2 이하 마이그레이션용 */
+  attackLevel?: number
+  hpLevel?: number
+}
+
+export interface DamageEvent {
+  value: number
+  x: number
+  y: number
+  isCritical?: boolean
+  isSkill?: boolean
+}
+
+export type BattleEvent =
+  | { type: 'player_attack'; monsterId: string; damage: number; isCritical?: boolean }
+  | { type: 'skill_use'; skillId: string; hits: { monsterId: string; damage: number }[] }
+  | { type: 'monster_hit'; monsterId: string }
+  | { type: 'monster_killed'; monsterId: string; gold: number }
+  | { type: 'player_hit'; damage: number }
+  | { type: 'monster_spawned'; monsterId: string }
+  | { type: 'equipment_dropped'; equipment: Equipment }
+
+export interface EnhanceResult {
+  success: boolean
+  previousLevel: number
+  newLevel: number
+}
+
+export interface AchievementReward {
+  meso?: number
+  potion?: number
+  scroll?: number
+}
+
+export interface AchievementDef {
+  id: string
+  name: string
+  description: string
+  target: number
+  icon: string
+  reward: AchievementReward
+  trackKey: string
+}
+
+export interface AchievementProgress {
+  claimed: boolean
+}
+
+export interface DailyRewardState {
+  lastClaimDate: string
+  streak: number
+}
+
+export interface MetaStats {
+  totalKills: number
+  totalGachaPulls: number
+  totalEnhances: number
+}
+
+export interface OfflineRewardState {
+  lastActiveAt: number
+  pendingShown: boolean
+}

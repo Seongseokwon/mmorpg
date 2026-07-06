@@ -1,0 +1,17 @@
+/* 방치 사냥 오버레이 UI */
+.hunt-glass {
+  background: rgba(10, 14, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.hunt-glass--light {
+  background: rgba(20, 28, 48, 0.55);
+}
+
+.overlay-text {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}

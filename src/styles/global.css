@@ -1,0 +1,126 @@
+:root {
+  --color-bg: #1a1a2e;
+  --color-bg-panel: #16213e;
+  --color-bg-card: #0f3460;
+  --color-accent: #e94560;
+  --color-accent-gold: #f5c542;
+  --color-text: #eaeaea;
+  --color-text-muted: #a0a0b8;
+  --color-success: #4ecca3;
+  --color-border: #2a2a4a;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --font-game: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-game);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+#app {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.panel {
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-accent-gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.stat-bar {
+  height: 10px;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stat-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.stat-bar__fill--hp {
+  background: linear-gradient(90deg, #e94560, #ff6b8a);
+}
+
+.stat-bar__fill--monster {
+  background: linear-gradient(90deg, #7b2ff7, #b06ab3);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn--primary {
+  background: linear-gradient(180deg, #e94560, #c73652);
+  color: #fff;
+}
+
+.btn--secondary {
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn--gold {
+  background: linear-gradient(180deg, #f5c542, #d4a017);
+  color: #3b2e00;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn:disabled:active {
+  transform: none;
+}
