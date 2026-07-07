@@ -67,7 +67,7 @@
 | 1 | `src/components/upgrade/` 빈 폴더 | 아무 파일도 없고 어디서도 참조 안 함 — 삭제 대상 |
 | 2 | 사운드 전무 | CLAUDE.md 스택엔 Howler.js가 있지만 `package.json`엔 미설치. 타격음/레벨업/가챠/강화 성공-실패 SFX, BGM 전혀 없음 |
 | 3 | 빌드 청크 경고 | `vite build` 시 500KB+ 단일 청크 경고 — pixi.js 관련 코드 스플리팅 검토 필요 |
-| ~~4~~ | ~~몬스터 HP 미니바~~ | **2026-07-07 완료** — `MonsterHpBars.vue` 추가로 몬스터 각각의 머리 위에 개별 HP 바 표시. 기존 화면 중앙 "타겟 몬스터" 이름/HP 텍스트 패널(`HuntMonsterBar.vue`)은 그대로 유지 |
+| ~~4~~ | ~~몬스터 HP 미니바~~ | **2026-07-07 완료** — `MonsterHpBars.vue` 추가로 몬스터 각각의 머리 위에 개별 HP 바 표시. 화면 중앙에 떠 있던 단일 "타겟 몬스터" 이름/HP 패널(`HuntMonsterBar.vue`)은 개별 바와 중복돼 제거 |
 | 5 | Vue Router 미설치 | 현재 단일 뷰(GameView)라 당장은 불필요하지만, 스택 문서와 실제 코드가 다름 — 추후 랭킹/로그인 화면 생기면 필요 |
 | 6 | `save.store.ts:21`의 `saveTimer`가 모듈 전역 변수 | CLAUDE.md 자체 규칙("Global mutable state 금지") 위반 |
 | 7 | 탭 종료/새로고침 시 최근 최대 1초 상태 유실 가능 | `scheduleSave` 1초 디바운스, `beforeunload` 대응 없음 |

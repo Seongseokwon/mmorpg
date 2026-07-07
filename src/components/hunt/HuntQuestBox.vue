@@ -17,7 +17,7 @@ const killProgress = computed(() => battle.killCount % 3)
     <button class="quest-box__summary hunt-glass" @click="expanded = !expanded">
       <span class="quest-box__icon">⚔️</span>
       <span class="quest-box__label overlay-text">몬스터 처치</span>
-      <span class="quest-box__progress overlay-text">{{ killProgress }}/3</span>
+      <span class="quest-box__progress overlay-text" data-testid="quest-kill-progress">{{ killProgress }}/3</span>
       <span class="quest-box__toggle overlay-text">{{ expanded ? '▲' : '▼' }}</span>
     </button>
 

@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import GameCanvas from '@/components/battle/GameCanvas.vue'
 import HuntTopBar from '@/components/hunt/HuntTopBar.vue'
 import HuntQuestBox from '@/components/hunt/HuntQuestBox.vue'
-import HuntMonsterBar from '@/components/hunt/HuntMonsterBar.vue'
 import MonsterHpBars from '@/components/hunt/MonsterHpBars.vue'
 import HuntPlayerBar from '@/components/hunt/HuntPlayerBar.vue'
 import HuntSkillBar from '@/components/hunt/HuntSkillBar.vue'
@@ -61,7 +60,6 @@ function closeSheet(): void {
           <GameCanvas />
           <MonsterHpBars />
           <HuntQuestBox />
-          <HuntMonsterBar />
         </div>
       </div>
 
