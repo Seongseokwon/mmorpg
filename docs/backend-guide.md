@@ -59,6 +59,9 @@ server/
     save/
       save.service.ts     Save 테이블 upsert/조회
       save.controller.ts  GET/PUT /save (JwtAccessGuard로 보호)
+    ranking/
+      ranking.service.ts    Save.data(JSONB)에서 raw SQL로 상위 100명 집계
+      ranking.controller.ts GET /ranking (인증 불필요 — 게스트도 조회 가능)
   prisma/schema.prisma  User, Save 모델
   test/*.e2e-spec.ts    Jest+Supertest e2e (프론트의 Playwright와는 별개 — REST API 자체 검증)
   docker-compose.yml    로컬 Postgres
@@ -77,15 +80,24 @@ POST /auth/refresh   (refreshToken 쿠키 필요)        → 200 { accessToken }
 POST /auth/logout    (Authorization 헤더 필요)       → 204, refreshToken 쿠키 제거
 GET  /save           (Authorization 헤더 필요)       → 200 { version, data, updatedAt } 또는 빈 바디(저장 없음)
 PUT  /save           (Authorization 헤더 필요) { version, data }  → 200 { version, data, updatedAt }
+GET  /ranking        (인증 불필요)                    → 200 [{ rank, nickname, level, maxClearedStage }, ...] (상위 100명)
 ```
 
 - **액세스 토큰**은 응답 바디로 내려준다 — 프론트는 메모리(Pinia 등)에만 들고 있고
   `localStorage`에 두지 않는 걸 권장한다 (XSS로 탈취되면 그대로 노출되는 걸 피하기 위해).
   `Authorization: Bearer <accessToken>` 헤더로 보낸다.
-- **리프레시 토큰**은 `httpOnly`+`Secure`(프로덕션만)+`SameSite=Lax` 쿠키로만 오간다. `path`를
-  `/auth`로 좁혀뒀다 — `/save` 같은 다른 요청에는 안 실린다. 만료는 30일(`.env`의
-  `JWT_REFRESH_EXPIRES_IN`), 서명+만료만 검증하는 스테이트리스 방식이라 **서버가 리프레시 토큰
-  자체를 강제로 무효화할 방법은 아직 없다** (다른 기기 강제 로그아웃 등은 후속 과제).
+- **리프레시 토큰**은 `httpOnly`+`Secure`(프로덕션만) 쿠키로만 오간다. `sameSite`는 로컬
+  개발에서는 `Lax`, 프로덕션(프론트=Vercel/백엔드=Render처럼 서로 다른 도메인)에서는 `None`으로
+  분기한다(`auth.constants.ts`의 `refreshCookieOptions()`) — 자세한 이유는 아래 "배포(Render)"절
+  참고. `path`를 `/auth`로 좁혀뒀다 — `/save`, `/ranking` 같은 다른 요청에는 안 실린다. 만료는
+  30일(`.env`의 `JWT_REFRESH_EXPIRES_IN`), 서명+만료만 검증하는 스테이트리스 방식이라 **서버가
+  리프레시 토큰 자체를 강제로 무효화할 방법은 아직 없다** (다른 기기 강제 로그아웃 등은 후속 과제).
+- **`GET /ranking`은 인증 가드가 없다** — 게스트도 로그인 없이 다른 유저 랭킹을 구경할 수 있어야
+  한다는 판단(자기 진행상황이 안 나올 뿐). 정렬 기준은 `maxClearedStage`(최고 클리어 사냥터) DESC →
+  `level` DESC → `updatedAt` ASC(동점이면 먼저 달성한 사람이 위). 골드처럼 소비로 줄어드는 값이
+  아니라 한 번 오르면 안 내려가는 값을 기준으로 삼아 순위가 요동치지 않게 했다. `Save.data`가
+  JSONB라 Prisma의 `orderBy`로 표현이 안 돼 `$queryRaw`를 쓴다. 닉네임 필드가 생기기 전(v4 이하)에
+  저장된 세이브는 `COALESCE`로 "익명의 모험가"/레벨 1/스테이지 1 기본값을 채운다.
 - **`GET /save`가 아직 저장한 적 없는 유저에 대해선 빈 바디(200, Content-Type 없음)를 반환한다** —
   JSON `null`이 아니라 진짜 빈 문자열이다 (Nest가 컨트롤러에서 `null`을 반환하면 이렇게 직렬화한다).
   프론트에서 연동할 때 `JSON.parse`를 바로 태우지 말고 "본문이 비어 있으면 로컬 세이브를 그대로

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export type NavId = 'character' | 'equipment' | 'skill' | 'reward' | 'achievement' | 'stage'
+export type NavId = 'character' | 'equipment' | 'skill' | 'reward' | 'achievement' | 'stage' | 'ranking'
 
 defineProps<{
   active: NavId | null
@@ -17,6 +17,7 @@ const navItems: { id: NavId; label: string; icon: string }[] = [
   { id: 'reward', label: '보상', icon: '🎁' },
   { id: 'achievement', label: '업적', icon: '🏆' },
   { id: 'stage', label: '스테이지', icon: '🗺️' },
+  { id: 'ranking', label: '랭킹', icon: '📊' },
 ]
 </script>
 

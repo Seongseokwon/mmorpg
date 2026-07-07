@@ -62,8 +62,8 @@
 
 ```
 src/
-  api/            백엔드(server/) REST 클라이언트 (http.ts, auth.ts, save.ts) — Phase 4 프론트 연동
-  components/     Vue 컴포넌트. 기능별 하위 폴더 (hunt/, equipment/, inventory/, skill/, gacha/, reward/, stage/, stats/, modal/, battle/)
+  api/            백엔드(server/) REST 클라이언트 (http.ts, auth.ts, save.ts, ranking.ts) — Phase 4 프론트 연동
+  components/     Vue 컴포넌트. 기능별 하위 폴더 (hunt/, equipment/, inventory/, skill/, gacha/, reward/, stage/, stats/, modal/, battle/, ranking/)
   composables/    Vue 3 컴포지션 함수. use* 접두사. store 여러 개를 조합하는 "접착제" 역할
   data/           게임 밸런스/텍스트 상수 (gameData.ts, rewardData.ts, statData.ts) — "매직넘버 금지" 규칙의 실체
   engine/         (아직 비어있음)

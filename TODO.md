@@ -127,7 +127,17 @@
   `backdrop-filter`(`hunt-glass`) 적용된 `<header>` 안에 넣었더니 그 조상이 `position:fixed`의
   containing block이 되어버려 모달이 화면 구석에 짜부라져 보이는 문제 — 헤더 바깥 형제 노드로
   옮겨서 수정(`docs/dev-guide.md` 9절 Gotchas에 기록). E2E: `tests/e2e/growth/nickname.spec.ts`.
-- [ ] 랭킹 시스템 (닉네임 필드가 이제 준비됐으니 다음 순서로 진행 가능)
+- [x] **랭킹 시스템 — 2026-07-07 완료**. 하단 네비게이션에 "랭킹" 탭 추가(총 7탭), 열 때마다
+  `GET /ranking`으로 새로 조회(Redis/캐시 없이 매번 쿼리 — 이 규모에선 충분하다고 판단, 근거는
+  MEMORY.md 참고). 정렬 기준은 최고 클리어 사냥터(`maxClearedStage`) 내림차순 → 레벨 내림차순 →
+  달성 시각(`updatedAt`) 오름차순(동점이면 먼저 도달한 사람이 위) — 골드처럼 소비로 줄어드는
+  값이 아니라 단조 증가하는 값을 기준으로 삼아 순위가 요동치지 않게 했다. `Save.data`가 JSONB라
+  Prisma `orderBy`로 표현이 안 돼 raw SQL(`$queryRaw`) 사용. 인증 가드 없음 — 게스트도 로그인 없이
+  랭킹을 구경할 수 있다(자기 기록만 안 나올 뿐). 상위 100명만 반환. 새 백엔드 테이블 없이 기존
+  `Save.data`(닉네임 포함)를 그대로 집계하므로 별도 동기화 로직 불필요. E2E:
+  `tests/e2e/ranking/ranking.spec.ts`(백엔드 없이도 통과, 에러 상태 검증) +
+  `server/test/ranking.e2e-spec.ts`(정렬 순서 실제 검증). 로컬 백엔드로 실제 DB 데이터(닉네임
+  필드 도입 전 저장된 옛 세이브 포함) 조회 및 화면 렌더링까지 직접 확인.
 - [x] **배포 환경/호스팅 결정 + 백엔드 배포 준비 — 2026-07-07 완료**. 프론트=Vercel, 백엔드=Render
   (상시 구동 Node 프로세스 + 관리형 Postgres — Vercel 서버리스는 Prisma 커넥션 풀 고갈/콜드스타트
   문제로 배제). 레포 루트 `render.yaml` Blueprint 추가. 프론트/백엔드가 서로 다른 도메인이 되므로

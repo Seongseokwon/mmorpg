@@ -18,6 +18,7 @@ import GachaPanel from '@/components/gacha/GachaPanel.vue'
 import AchievementPanel from '@/components/reward/AchievementPanel.vue'
 import DailyRewardPanel from '@/components/reward/DailyRewardPanel.vue'
 import OfflineRewardModal from '@/components/reward/OfflineRewardModal.vue'
+import RankingPanel from '@/components/ranking/RankingPanel.vue'
 import { useGameSession } from '@/composables/useGameSession'
 import { useBattleStore } from '@/stores/battle.store'
 import { useAchievementStore } from '@/stores/achievement.store'
@@ -38,6 +39,7 @@ const navTitles: Record<NavId, string> = {
   reward: '보상',
   achievement: '업적',
   stage: '스테이지',
+  ranking: '랭킹',
 }
 
 const sheetTitle = computed(() => (activeNav.value ? navTitles[activeNav.value] : ''))
@@ -135,6 +137,9 @@ function closeSheet(): void {
       </template>
       <template v-else-if="activeNav === 'stage'">
         <StagePanel />
+      </template>
+      <template v-else-if="activeNav === 'ranking'">
+        <RankingPanel />
       </template>
     </GameSheet>
   </div>
