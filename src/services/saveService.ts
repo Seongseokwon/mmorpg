@@ -23,6 +23,11 @@ function getDb(): Promise<IDBPDatabase<MmorpgDB>> {
           db.createObjectStore('save')
         }
       },
+    }).catch((error) => {
+      // Safari 프라이빗 모드/쿼터 초과 등으로 열기 자체가 거부되면 캐시를 비워
+      // 다음 시도(예: 재저장) 때 다시 열어보게 한다.
+      dbPromise = null
+      throw error
     })
   }
   return dbPromise

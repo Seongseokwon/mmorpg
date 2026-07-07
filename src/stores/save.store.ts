@@ -22,9 +22,19 @@ let saveTimer: number | null = null
 
 export const useSaveStore = defineStore('save', () => {
   const isLoaded = ref(false)
+  // IndexedDB 접근(open/read/write)이 실패하면 false로 내려간다 — Safari 프라이빗 모드,
+  // 쿼터 초과 등에서도 게임은 계속 플레이 가능해야 하므로 예외를 던지지 않고 상태로 노출한다.
+  const isSaveAvailable = ref(true)
 
   async function load(): Promise<void> {
-    const data = await loadSaveData()
+    let data: SaveData | null = null
+    try {
+      data = await loadSaveData()
+    } catch (error) {
+      console.error('[save] IndexedDB 불러오기 실패 — 저장 없이 진행합니다.', error)
+      isSaveAvailable.value = false
+    }
+
     applySaveData(data ?? createDefaultSaveData())
     isLoaded.value = true
 
@@ -110,16 +120,31 @@ export const useSaveStore = defineStore('save', () => {
       window.clearTimeout(saveTimer)
     }
     saveTimer = window.setTimeout(() => {
-      void saveSaveData(collectSaveData())
+      saveSaveData(collectSaveData()).then(
+        () => {
+          isSaveAvailable.value = true
+        },
+        (error) => {
+          console.error('[save] IndexedDB 저장 실패', error)
+          isSaveAvailable.value = false
+        },
+      )
     }, 1000)
   }
 
   async function saveNow(): Promise<void> {
-    await saveSaveData(collectSaveData())
+    try {
+      await saveSaveData(collectSaveData())
+      isSaveAvailable.value = true
+    } catch (error) {
+      console.error('[save] IndexedDB 저장 실패', error)
+      isSaveAvailable.value = false
+    }
   }
 
   return {
     isLoaded,
+    isSaveAvailable,
     load,
     scheduleSave,
     saveNow,

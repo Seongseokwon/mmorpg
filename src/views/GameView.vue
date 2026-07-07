@@ -21,11 +21,13 @@ import OfflineRewardModal from '@/components/reward/OfflineRewardModal.vue'
 import { useGameSession } from '@/composables/useGameSession'
 import { useBattleStore } from '@/stores/battle.store'
 import { useAchievementStore } from '@/stores/achievement.store'
+import { useSaveStore } from '@/stores/save.store'
 import { STAT_POINTS_PER_LEVEL } from '@/data/statData'
 
 useGameSession()
 const battle = useBattleStore()
 const achievement = useAchievementStore()
+const save = useSaveStore()
 
 const activeNav = ref<NavId | null>(null)
 
@@ -83,6 +85,10 @@ function closeSheet(): void {
           ⬆️ 레벨 업! +{{ battle.lastLevelUp * STAT_POINTS_PER_LEVEL }} 스탯 포인트
         </div>
       </Transition>
+
+      <div v-if="save.isLoaded && !save.isSaveAvailable" class="hunt-toast hunt-toast--warning">
+        ⚠️ 저장 불가 - 진행 상황이 저장되지 않습니다
+      </div>
 
       <OfflineRewardModal />
     </div>
@@ -193,6 +199,14 @@ function closeSheet(): void {
   background: rgba(10, 14, 28, 0.9);
   border: 1px solid #7ec8ff;
   color: #7ec8ff;
+}
+
+.hunt-toast--warning {
+  top: 8%;
+  background: rgba(56, 16, 16, 0.92);
+  border: 1px solid #ff6b6b;
+  color: #ff6b6b;
+  pointer-events: none;
 }
 
 .toast-enter-active,
