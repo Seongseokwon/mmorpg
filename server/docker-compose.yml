@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mmorpg
+      POSTGRES_PASSWORD: mmorpg
+      POSTGRES_DB: mmorpg
+    ports:
+      # 호스트에 이미 5432를 쓰는 다른 Postgres(WSL 등)가 있을 수 있어 5433으로 매핑
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

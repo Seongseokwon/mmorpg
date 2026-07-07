@@ -95,15 +95,18 @@
 
 ---
 
-## ⚪ 미착수 (Phase 4: 백엔드 연동)
+## 🟢 진행 중 (Phase 4: 백엔드 연동)
 
-CLAUDE.md 기준 Phase 4 전체가 아직 시작 전:
-
-- NestJS 백엔드 프로젝트 자체가 없음
-- 회원가입/로그인(Authentication)
-- 클라우드 세이브 (현재는 로컬 IndexedDB만 존재, 기기 변경 시 진행 상황 소실)
-- 랭킹 시스템
-- API 동기화
+- [x] **인증 + 클라우드 세이브 API (1단계) — 2026-07-07 완료**. `server/`에 NestJS + Prisma +
+  PostgreSQL 백엔드 신설. `POST /auth/{register,login,refresh,logout}`, `GET·PUT /save` 구현
+  (JWT 액세스 15분 + 리프레시 30일/httpOnly 쿠키, bcryptjs 해싱, 세이브는 프론트 `SaveData`를
+  그대로 옮긴 JSON 블롭). e2e 테스트(`server/test/*.e2e-spec.ts`) 10개 통과 확인. 설계 배경/API
+  스펙은 [docs/backend-guide.md](docs/backend-guide.md) 참고.
+  **이번 범위에 없는 것** (후속 과제): 프론트 로그인 화면·API 연동, IndexedDB↔서버 동기화,
+  리프레시 토큰 강제 폐기, 비밀번호 재설정, 랭킹, 배포.
+- [ ] 프론트 연동: 로그인/회원가입 화면, `src/api/` 클라이언트, IndexedDB ↔ 서버 세이브 동기화
+- [ ] 랭킹 시스템
+- [ ] 배포 환경/호스팅 결정
 
 로컬 저장 스키마(`SaveData`, 버전 마이그레이션)는 이미 잘 분리되어 있어 백엔드 붙일 때 그대로 전송 포맷으로 쓰기 좋은 상태.
 

@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  save Save?
+}
+
+/// 프론트(src/types/game.ts)의 SaveData를 그대로 옮긴 버저닝된 JSON 블롭.
+/// 필드별로 정규화하지 않고 클라이언트가 이미 마이그레이션까지 마친 값을 그대로 신뢰한다.
+model Save {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version   Int
+  data      Json
+  updatedAt DateTime @updatedAt
+}
