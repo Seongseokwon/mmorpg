@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-07-07 (6) — Render 배포 준비 (프론트=Vercel, 백엔드=Render)
+
+사용자가 Railway 무료 크레딧을 이미 소진해서 Render로 백엔드를 배포하기로 결정. Vercel에
+NestJS+Prisma를 올리는 건 서버리스 모델이라 콜드스타트 + Prisma 커넥션 풀 고갈 문제가 있어 배제하고,
+상시 구동 Node 프로세스가 되는 Render(무료 Postgres 포함)를 골랐다.
+
+**배포 전에 반드시 고쳐야 했던 것 — 안 고쳤으면 프로덕션에서 로그인이 조용히 깨졌을 부분**:
+- `refreshCookieOptions()`가 `sameSite: 'lax'` 고정이었다. 로컬 개발(FE `localhost:6868` ↔ BE
+  `localhost:3000`)은 포트만 다르고 same-site라 문제가 안 드러났지만, 배포하면 FE(`*.vercel.app`)와
+  BE(`*.onrender.com`)가 진짜 다른 도메인이 되어 cross-site 요청이 된다. `SameSite=Lax` 쿠키는
+  cross-site fetch/XHR엔 브라우저가 아예 안 실어 보내므로, `/auth/refresh`가 항상 쿠키 없이 호출돼
+  세션 복원이 100% 실패하는 버그가 배포 후에야 발견됐을 뻔했다. `NODE_ENV=production`일 때만
+  `sameSite: 'none'`(+`secure: true`, SameSite=None의 필수 조건)으로 분기해서 해결.
+- Render는 앞단에서 TLS 종료 후 내부적으로 평문 HTTP로 프록시한다 — `main.ts`에
+  `app.set('trust proxy', 1)` 추가(`NestExpressApplication` 제네릭으로 타입 확보) 없이는 secure
+  쿠키 관련 처리가 프록시 뒤에서 어긋날 수 있음.
+- Nest 앱엔 원래 루트 라우트가 없어 Render 기본 헬스체크(`/`)가 항상 404 — `GET /health`
+  (`AppController`) 신설.
+
+**`render.yaml` Blueprint**: `mmorpg-db`(Postgres, Free) + `mmorpg-server`(Web Service, Free,
+`rootDir: server`, buildCommand에 `prisma migrate deploy` 포함해 배포마다 자동 마이그레이션).
+`JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET`/`CORS_ORIGINS`는 `sync: false`로 남겨 Render 대시보드에서
+직접 입력하게 함(레포에 프로덕션 시크릿 커밋 금지). 프로덕션용 랜덤 시크릿은 그 자리에서
+`crypto.randomBytes(48).toString('hex')`로 생성해 채팅으로만 전달(파일에 남기지 않음).
+
+**에이전트가 할 수 없었던 부분**: Render 계정 로그인/Blueprint 연결/대시보드 환경변수 입력은
+브라우저 인터랙션 + 계정 인증이 필요해 사람이 직접 해야 했다 — 코드/설정 준비, 로컬 빌드+e2e
+검증(`npm run build`, `server/test/*.e2e-spec.ts` 10개 통과)까지만 대신하고 나머지는
+[docs/backend-guide.md](docs/backend-guide.md)에 절차를 적어 안내.
+
+---
+
 ## 2026-07-07 (5) — 랜딩/로그인/회원가입 화면 + 백엔드 실연동 (Phase 4 프론트)
 
 기존엔 `App.vue`가 `GameView`를 라우팅 없이 바로 그렸다(TODO.md 기술부채 #5: Vue Router 미설치).

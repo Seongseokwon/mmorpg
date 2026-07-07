@@ -128,6 +128,53 @@ model Save {
 - **모노레포(레포 안 `server/`) vs 별도 레포** → 지금 단계는 배포 파이프라인이나 팀 분리가 없어서
   하나의 레포에서 관리하는 게 반복 개발에 더 빠르다.
 
+## 배포 (Render)
+
+Vercel은 프론트(정적 SPA)엔 잘 맞지만 서버리스 함수 모델이라 NestJS+Prisma를 올리면 콜드스타트와
+DB 커넥션 풀 고갈 문제가 생긴다. 그래서 백엔드는 **Render**(상시 구동 Node 프로세스 + 관리형
+Postgres)에 배포한다. 레포 루트의 `render.yaml`이 Blueprint로 두 리소스를 함께 정의한다.
+
+### 배포 전 체크리스트 (이미 반영됨)
+
+- **`sameSite` 쿠키 설정**: 프론트(예: `*.vercel.app`)와 백엔드(예: `*.onrender.com`)가 서로 다른
+  도메인이라 브라우저 기준 cross-site 요청이 된다. `SameSite=Lax`는 cross-site fetch/XHR에 쿠키를
+  안 실어 보내므로 `refreshCookieOptions()`가 `NODE_ENV=production`일 때 `sameSite: 'none'`(+
+  `secure: true`)을 쓰도록 이미 고쳐뒀다. 로컬 개발(프론트/백엔드가 포트만 다른 `localhost`)은
+  same-site로 취급돼 `lax` 그대로 동작한다.
+- **`trust proxy`**: Render는 앞단에서 TLS를 종료하고 내부적으로는 평문 HTTP로 전달한다.
+  `main.ts`에 `app.set('trust proxy', 1)`을 추가해 `X-Forwarded-Proto`를 신뢰하도록 했다 — 없으면
+  secure 쿠키 관련 동작이 프록시 뒤에서 꼬일 수 있다.
+- **`GET /health`**: Render 헬스체크가 기본적으로 `/`를 두드리는데 Nest 앱엔 루트 라우트가 없어
+  항상 404가 났다. `AppController`에 헬스체크 전용 엔드포인트를 추가했다.
+
+### 배포 절차
+
+1. Render 대시보드 → **New → Blueprint** → 이 GitHub 레포 연결. `render.yaml`을 읽어서
+   `mmorpg-db`(Postgres, Free) + `mmorpg-server`(Web Service, Free, `rootDir: server`) 두 리소스를
+   보여준다.
+2. 생성 화면에서 `sync: false`로 표시된 환경변수를 직접 입력한다:
+   - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — 로컬 `.env`의 플레이스홀더를 그대로 쓰지 말고
+     각각 새로 랜덤 생성한 값을 쓴다 (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`).
+   - `CORS_ORIGINS` — 프론트 Vercel 배포 URL(예: `https://mmorpg-idle.vercel.app`). 아직 모르면
+     일단 아무 값이나 넣고 프론트 배포 후 다시 채워 넣어도 된다(값 바꾸면 Render가 재배포).
+3. 배포가 끝나면 Render가 백엔드 공개 URL(`https://mmorpg-server-xxxx.onrender.com`)을 준다. 이
+   URL을 프론트의 `VITE_API_BASE_URL`(Vercel 환경변수)에 넣는다.
+4. `buildCommand`에 `prisma migrate deploy`가 포함돼 있어 배포마다 자동으로 스키마 마이그레이션이
+   적용된다 — 로컬에서 `prisma migrate dev`로 새 마이그레이션을 만들고 커밋하기만 하면 된다.
+5. **Render Free Postgres의 유효기간**: Free 플랜 DB는 일정 기간 후 만료되는 정책이 있다(생성 시
+   대시보드에 정확한 만료일이 표시된다 — 이 문서 작성 시점 기준으로 정확한 일수를 단정하지 않는다).
+   만료 전에 유료 플랜으로 전환하거나 새 DB로 마이그레이션해야 데이터가 안 사라진다.
+
+### Blueprint를 안 쓰고 수동으로 만들 때
+
+`render.yaml` 파싱에 문제가 있으면 대시보드에서 각각 수동으로 만들어도 된다: **PostgreSQL**
+(Free) 하나 생성 → **Web Service** 생성 시 Root Directory를 `server`로, Build Command를
+`npm install && npx prisma generate && npx prisma migrate deploy && npm run build`, Start Command를
+`npm run start:prod`로 지정 → 위 환경변수들을 전부 수동으로 입력(`DATABASE_URL`은 방금 만든
+Postgres의 Internal Connection String).
+
+---
+
 ## 다음 단계 (이번에 안 한 것)
 
 1. ~~프론트 연동~~ — **완료**. 랜딩/로그인/회원가입 화면, `src/api/` 클라이언트, 앱 부팅 시
@@ -137,4 +184,7 @@ model Save {
    덮어쓴다"는 단순 규칙만 있어서, 여러 기기에서 각각 오프라인으로 진행한 뒤 로그인 순서에 따라
    최신 진행분이 덮어써질 수 있다.
 3. 리프레시 토큰 폐기 테이블 (강제 로그아웃), 비밀번호 재설정, 이메일 인증
-4. 랭킹 API, 배포 환경/호스팅 결정 (`vercel.json` SPA rewrite는 추가했지만 백엔드 배포처는 미정)
+4. 랭킹 API
+5. ~~배포 환경/호스팅 결정~~ — **완료**. 프론트는 Vercel, 백엔드는 Render(`render.yaml` Blueprint,
+   위 "배포(Render)" 절 참고). 실제 Render 프로젝트 생성/환경변수 입력은 대시보드에서 수동으로
+   진행 필요.

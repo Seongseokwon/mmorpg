@@ -118,7 +118,14 @@
   이긴다"), 리프레시 토큰 강제 폐기, 비밀번호 재설정, 랭킹, 배포.
 - [ ] IndexedDB ↔ 서버 세이브의 진짜 충돌 병합 (지금은 "재로그인 시 클라우드가 이 기기를 덮어쓴다"는 단순 규칙만 있음)
 - [ ] 랭킹 시스템
-- [ ] 배포 환경/호스팅 결정 (`vercel.json` SPA rewrite는 추가했지만 백엔드 배포처는 미정)
+- [x] **배포 환경/호스팅 결정 + 백엔드 배포 준비 — 2026-07-07 완료**. 프론트=Vercel, 백엔드=Render
+  (상시 구동 Node 프로세스 + 관리형 Postgres — Vercel 서버리스는 Prisma 커넥션 풀 고갈/콜드스타트
+  문제로 배제). 레포 루트 `render.yaml` Blueprint 추가. 프론트/백엔드가 서로 다른 도메인이 되므로
+  `refreshCookieOptions()`의 `sameSite`를 프로덕션에서 `'none'`으로(로컬은 `'lax'` 유지),
+  `main.ts`에 `trust proxy` 추가, Render 헬스체크용 `GET /health`(`AppController`) 추가. 로컬
+  빌드(`npm run build`) + 백엔드 e2e(`server/test/*.e2e-spec.ts` 10개) 통과 확인. Render 대시보드
+  가입/Blueprint 연결/환경변수 입력 등 실제 배포 조작은 사람이 직접 해야 함(계정 로그인이 필요해
+  에이전트가 대신할 수 없음) — 절차는 [docs/backend-guide.md "배포(Render)"절](docs/backend-guide.md) 참고.
 
 로컬 저장 스키마(`SaveData`, 버전 마이그레이션)는 이미 잘 분리되어 있어 백엔드 붙일 때 그대로 전송 포맷으로 쓰기 좋은 상태.
 
