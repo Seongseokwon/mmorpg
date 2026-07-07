@@ -106,25 +106,30 @@
   `rollEnhanceSuccess`), `EquipmentPanel.vue:79`, `EnhanceModal.vue:113`. 최대 강화 레벨에서도 "강화" 버튼이
   활성 상태고 성공률이 25%로 표시되지만, `rollEnhanceSuccess`는 그 레벨에서 무조건 `false`를 반환한다. 유저는
   확률을 믿고 골드/주문서를 계속 태우는데 100% 실패만 함. **최우선 수정 대상.**
-- [ ] **`await` 이후 생성된 `watch()`가 컴포넌트 unmount 시 정리 안 됨** — `useGameRenderer.ts:12-32`,
+- [x] **`await` 이후 생성된 `watch()`가 컴포넌트 unmount 시 정리 안 됨** — `useGameRenderer.ts:12-32`,
   `useGameSession.ts:22-64`. `onMounted(async () => { await ...; watch(...) })` 패턴이라 Vue가 컴포넌트
   effect scope에 자동 귀속 못 시킴(`vue/no-watch-after-await`). 지금은 단일 뷰라 안 터지지만, 로그인/랭킹
-  화면이 생겨 `GameView`가 조건부 mount/unmount되는 순간 실제 메모리 누수로 전환됨.
+  화면이 생겨 `GameView`가 조건부 mount/unmount되는 순간 실제 메모리 누수로 전환됨. **2026-07-07 해결** —
+  두 곳 모두 `watch()`의 stop 핸들을 변수에 담아 `onUnmounted`에서 명시적으로 호출하도록 수정.
 
 ### Major
 
-- [ ] **IndexedDB 접근 실패 시 예외 처리 전무** — `saveService.ts`, `save.store.ts:26-34`. Safari 프라이빗
+- [x] **IndexedDB 접근 실패 시 예외 처리 전무** — `saveService.ts`, `save.store.ts:26-34`. Safari 프라이빗
   모드/쿼터 초과 등으로 `openDB`/`db.get`/`db.put`이 reject되면 `save.load()`가 catch 없이 던져서 게임이
-  빈 화면에서 멈춤. 유저 안내도 전혀 없음.
-- [ ] **일일 보상 리셋이 UTC 기준** — `rewardService.ts:90-98`(`getTodayDateString`, `isYesterday`).
+  빈 화면에서 멈춤. 유저 안내도 전혀 없음. **2026-07-07 해결** — `load()`/`scheduleSave()`/`saveNow()`를
+  try/catch로 감싸 실패 시 인메모리 기본 세이브로 계속 플레이하고, `isSaveAvailable` 상태를 `GameView`
+  경고 배너로 노출.
+- [x] **일일 보상 리셋이 UTC 기준** — `rewardService.ts:90-98`(`getTodayDateString`, `isYesterday`).
   `toISOString()` 기반이라 KST(UTC+9)에서는 로컬 자정이 아니라 오전 9시에 리셋됨. 스트릭 판정이 최대
-  9시간 어긋날 수 있음.
-- [ ] **`GameRenderer.destroy()`가 무한반복 gsap 트윈을 안 죽임** — `GameRenderer.ts:396-407` vs
+  9시간 어긋날 수 있음. **2026-07-07 해결** — 로컬 타임존 기준 날짜 문자열로 변경.
+- [x] **`GameRenderer.destroy()`가 무한반복 gsap 트윈을 안 죽임** — `GameRenderer.ts:396-407` vs
   `applyIdleBob()`. `repeat: -1` 아이들 바운스 트윈이 destroy 이후에도 죽은 스프라이트를 계속 참조하며 영원히
-  tick. #1-2와 같은 리스크 축(현재 단일 마운트라 안전, 향후 라우팅 도입 시 위험).
-- [ ] **탭을 백그라운드에 오래 둬도 오프라인 보상 재계산 안 됨** — `reward.store.ts:59-70`,
+  tick. #1-2와 같은 리스크 축(현재 단일 마운트라 안전, 향후 라우팅 도입 시 위험). **2026-07-07 해결** —
+  `destroy()`에서 관련 스프라이트/텍스트 풀 전체에 `gsap.killTweensOf()` 호출.
+- [x] **탭을 백그라운드에 오래 둬도 오프라인 보상 재계산 안 됨** — `reward.store.ts:59-70`,
   `useGameSession.ts`. `checkOfflineReward()`가 `save.load()` 성공 시 딱 한 번만 호출됨
   (`visibilitychange` 훅 없음). 탭을 안 닫고 몇 시간 방치했다 돌아오면 보상 없이 그냥 느리게 진행된 상태.
+  **2026-07-07 해결** — `useGameSession()`에 `visibilitychange` 리스너 추가.
 
 ### Minor / Suggestion
 

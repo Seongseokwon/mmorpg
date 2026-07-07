@@ -24,16 +24,26 @@
 
 ## 🟠 Major 버그
 
-- [ ] IndexedDB 접근 실패 시 예외 처리 전무 — `saveService.ts`, `save.store.ts:26-34`.
+- [x] IndexedDB 접근 실패 시 예외 처리 전무 — `saveService.ts`, `save.store.ts:26-34`.
   Safari 프라이빗 모드/쿼터 초과 시 `save.load()`가 catch 없이 던져 빈 화면에서 멈춤.
-- [ ] 일일 보상 리셋이 UTC 기준 — `rewardService.ts:90-98`. KST에서는 자정이 아니라 오전 9시에
-  리셋되어 스트릭 판정이 최대 9시간 어긋남.
-- [ ] `GameRenderer.destroy()`가 무한반복 gsap 트윈(`applyIdleBob()`)을 안 죽임 — `GameRenderer.ts:396-407`.
-  현재는 단일 마운트라 안전하지만 라우팅 도입 시 메모리 누수로 전환.
-- [ ] 탭을 백그라운드에 오래 둬도 오프라인 보상 재계산 안 됨 — `reward.store.ts:59-70`,
+  **2026-07-07 수정 완료** — `getDb()`/`load()`/`scheduleSave()`/`saveNow()`를 try/catch로 감싸
+  실패 시 인메모리 기본 세이브로 계속 플레이 가능하게 하고, `GameView`에 저장 불가 경고 배너 추가.
+- [x] 일일 보상 리셋이 UTC 기준 — `rewardService.ts:90-98`. KST에서는 자정이 아니라 오전 9시에
+  리셋되어 스트릭 판정이 최대 9시간 어긋남. **2026-07-07 수정 완료** — `getTodayDateString()`/
+  `isYesterday()`가 로컬 타임존 기준 날짜 문자열을 쓰도록 수정. 회귀 테스트:
+  `tests/e2e/regression/daily-reward-timezone.spec.ts` (통과 확인).
+- [x] `GameRenderer.destroy()`가 무한반복 gsap 트윈(`applyIdleBob()`)을 안 죽임 — `GameRenderer.ts:396-407`.
+  현재는 단일 마운트라 안전하지만 라우팅 도입 시 메모리 누수로 전환. **2026-07-07 수정 완료** —
+  `destroy()`에서 플레이어/몬스터 풀/데미지 텍스트 풀의 모든 트윈을 명시적으로 kill하도록 수정.
+- [x] 탭을 백그라운드에 오래 둬도 오프라인 보상 재계산 안 됨 — `reward.store.ts:59-70`,
   `useGameSession.ts`. `visibilitychange` 훅 없이 `save.load()` 성공 시 한 번만 계산됨.
-- [ ] `await` 이후 생성된 `watch()`가 unmount 시 정리 안 됨 — `useGameRenderer.ts:12-32`,
+  **2026-07-07 수정 완료** — `useGameSession()`에 `visibilitychange` 리스너를 추가해 탭이 다시
+  보일 때마다 `checkOfflineReward()`를 재호출. 회귀 테스트: `tests/e2e/offline/background-resume.spec.ts`
+  (통과 확인).
+- [x] `await` 이후 생성된 `watch()`가 unmount 시 정리 안 됨 — `useGameRenderer.ts:12-32`,
   `useGameSession.ts:22-64`. 현재 단일 뷰라 안 터지지만 조건부 mount/unmount 도입 시 누수.
+  **2026-07-07 수정 완료** — 두 곳 모두 `watch()`의 stop 핸들을 변수에 담아 `onUnmounted`에서
+  명시적으로 호출하도록 수정.
 
 ---
 
