@@ -10,7 +10,10 @@ services:
     plan: free
     region: singapore
     rootDir: server
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    # --include=dev: NODE_ENV=production이 빌드 단계에도 적용되면서 npm install이 devDependencies
+    # (nest CLI, typescript 등 빌드에만 필요한 패키지)를 건너뛰어 `nest: not found`로 빌드가 실패하는
+    # 걸 막는다. 런타임(start:prod)은 컴파일된 dist/main.js만 실행하므로 devDependencies가 없어도 된다.
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
