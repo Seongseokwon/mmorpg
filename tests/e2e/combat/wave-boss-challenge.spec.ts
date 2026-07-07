@@ -66,4 +66,31 @@ test.describe('웨이브 → 보스 도전 시스템', () => {
       await expect(page.getByTestId('quest-phase-label')).toContainText('파밍')
     },
   )
+
+  test(
+    '도전을 시작하면 체력이 가득 찬 상태로 시작된다',
+    async ({ page }) => {
+      // 고스테이지(몬스터 공격력 25) + vit 0(최대 HP 100)으로 시딩해 파밍 중 HP가 눈에 띄게
+      // 깎이도록 만든다. str도 0이라 몬스터가 안 죽어 웨이브가 저절로 클리어될 일도 없다.
+      await seedSaveAndReload(
+        page,
+        buildSaveData({
+          mainStats: { str: 0, vit: 0, dex: 0, luk: 0 },
+          currentStage: 10,
+          maxClearedStage: 10,
+        }),
+      )
+
+      const hpText = page.getByTestId('player-hp')
+      await expect(hpText).toHaveText('100')
+
+      // 파밍 중 몬스터에게 맞아 HP가 깎일 때까지 대기 (HP 0 도달 전, 부분 피해 상태를 잡는다)
+      await expect(hpText).not.toHaveText('100', { timeout: 5_000 })
+
+      await page.getByTestId('challenge-button').click()
+
+      // 도전이 시작되면 즉시 풀피로 회복되어야 한다
+      await expect(hpText).toHaveText('100')
+    },
+  )
 })

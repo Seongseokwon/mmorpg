@@ -10,6 +10,7 @@ export interface FixtureSaveData {
   exp: number
   statPoints: number
   mainStats: { str: number; vit: number; dex: number; luk: number }
+  innateStats: { str: number; vit: number; dex: number; luk: number }
   subStats: {
     crit_rate: number
     crit_damage: number
@@ -64,6 +65,9 @@ export function buildSaveData(overrides: Partial<FixtureSaveData> = {}): Fixture
     exp: 0,
     statPoints: 5,
     mainStats: { str: 1, vit: 1, dex: 1, luk: 1 },
+    // 기본값은 0으로 고정 — 기존 스탯 관련 테스트가 "정확히 N"을 검증하므로 선천 능력치가
+    // 섞이지 않게 한다. 선천 능력치 자체를 검증하는 테스트는 overrides로 명시적으로 지정한다.
+    innateStats: { str: 0, vit: 0, dex: 0, luk: 0 },
     subStats: {
       crit_rate: 0,
       crit_damage: 0,

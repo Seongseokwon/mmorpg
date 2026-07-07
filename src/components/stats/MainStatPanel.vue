@@ -39,7 +39,7 @@ function allocate(statId: MainStatId): void {
         @click="allocate(stat.id)"
       >
         <span class="main-stat__btn-name">{{ stat.shortName }}</span>
-        <span class="main-stat__btn-value" :data-testid="`stat-value-${stat.id}`">{{ player.mainStats[stat.id] }}</span>
+        <span class="main-stat__btn-value" :data-testid="`stat-value-${stat.id}`">{{ player.totalMainStats[stat.id] }}</span>
         <span class="main-stat__btn-effect">{{ stat.effectPerPoint }}</span>
       </button>
     </div>

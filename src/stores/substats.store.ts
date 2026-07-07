@@ -29,14 +29,14 @@ export const useSubStatsStore = defineStore('substats', () => {
 
   const critRate = computed(() => {
     const player = usePlayerStore()
-    return getTotalCritRate(player.mainStats, levels.value)
+    return getTotalCritRate(player.totalMainStats, levels.value)
   })
 
   const critDamage = computed(() => getTotalCritDamage(levels.value))
 
   const attackIntervalMs = computed(() => {
     const player = usePlayerStore()
-    return getAttackIntervalMs(player.mainStats, levels.value)
+    return getAttackIntervalMs(player.totalMainStats, levels.value)
   })
 
   const mesoBonusPercent = computed(() => getSubMesoBonusPercent(levels.value))

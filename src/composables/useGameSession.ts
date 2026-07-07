@@ -61,6 +61,7 @@ export function useGameSession() {
         () => player.exp,
         () => player.statPoints,
         () => player.mainStats,
+        () => player.innateStats,
         () => subStats.levels,
         () => stage.currentStage,
         () => inventory.equipmentBag.length,

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { normalizeEquipmentList } from '@/services/equipmentService'
+import { rollInnateStats } from '@/services/statCalc'
 import type { Equipment, MainStats, SaveData } from '@/types/game'
 
 interface MmorpgDB extends DBSchema {
@@ -104,6 +105,7 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
       exp: raw.exp ?? 0,
       statPoints: raw.statPoints ?? 0,
       mainStats: raw.mainStats ?? { ...defaults.mainStats },
+      innateStats: raw.innateStats ?? { ...defaults.innateStats },
       subStats: raw.subStats ?? { ...defaults.subStats },
       currentStage: raw.currentStage ?? 1,
       maxClearedStage: raw.maxClearedStage ?? 1,
@@ -127,6 +129,7 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
     exp: raw.exp ?? 0,
     statPoints: raw.statPoints ?? 0,
     mainStats: raw.mainStats ?? { ...defaults.mainStats },
+    innateStats: raw.innateStats ?? { ...defaults.innateStats },
     subStats: raw.subStats ?? { ...defaults.subStats },
     currentStage: raw.currentStage ?? 1,
     maxClearedStage: raw.maxClearedStage ?? 1,
@@ -153,6 +156,9 @@ export function createDefaultSaveData(): SaveData {
     exp: 0,
     statPoints: 5,
     mainStats: { str: 0, vit: 0, dex: 0, luk: 0 },
+    // 캐릭터 "생성" 시점 = 세이브가 아직 없을 때 이 함수가 호출되는 순간. 한 번 굴려진 값은
+    // 이후 로드마다 raw.innateStats로 그대로 이어받고 다시 굴리지 않는다 (migrateSaveData 참고).
+    innateStats: rollInnateStats(10),
     subStats: {
       crit_rate: 0,
       crit_damage: 0,

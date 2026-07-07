@@ -1,4 +1,4 @@
-import type { MainStats, SubStatLevels } from '@/types/game'
+import type { MainStatId, MainStats, SubStatLevels } from '@/types/game'
 
 const ATK_BASE = 10
 const HP_BASE = 100
@@ -33,6 +33,22 @@ export function getCritRateFromMain(stats: MainStats): number {
 
 export function getAttackIntervalReduction(stats: MainStats): number {
   return stats.dex * DEX_SPEED_MS
+}
+
+const MAIN_STAT_IDS: MainStatId[] = ['str', 'vit', 'dex', 'luk']
+
+/** 4개 메인 스탯 중 하나를 균등 확률로 고른다. 선천 능력치 생성/레벨업 성장에 재사용된다. */
+export function pickRandomMainStatId(): MainStatId {
+  return MAIN_STAT_IDS[Math.floor(Math.random() * MAIN_STAT_IDS.length)]
+}
+
+/** 선천 능력치: 지정한 총량을 4개 메인 스탯에 한 포인트씩 무작위로 배분한다. */
+export function rollInnateStats(totalPoints: number): MainStats {
+  const stats: MainStats = { str: 0, vit: 0, dex: 0, luk: 0 }
+  for (let i = 0; i < totalPoints; i++) {
+    stats[pickRandomMainStatId()] += 1
+  }
+  return stats
 }
 
 export function getSubCritRate(levels: SubStatLevels): number {

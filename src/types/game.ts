@@ -89,6 +89,8 @@ export interface SaveData {
   exp: number
   statPoints: number
   mainStats: MainStats
+  /** 선천 능력치 — 캐릭터 생성 시 10포인트 무작위 배분, 레벨업마다 +1. 플레이어가 직접 배분할 수 없다. */
+  innateStats: MainStats
   subStats: SubStatLevels
   currentStage: number
   maxClearedStage: number

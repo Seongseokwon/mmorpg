@@ -150,6 +150,9 @@ export const useBattleStore = defineStore('battle', () => {
   function startChallenge(): void {
     if (stagePhase.value !== 'farming') return
 
+    // 보스 도전처럼 실패 시 되돌아가는 하이스테이크 콘텐츠는 공정하게 풀피로 시작한다.
+    usePlayerStore().syncHpToMax()
+
     stagePhase.value = 'wave'
     waveIndex.value = 1
     monsters.value = []

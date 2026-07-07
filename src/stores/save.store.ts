@@ -62,6 +62,7 @@ export const useSaveStore = defineStore('save', () => {
       exp: data.exp,
       statPoints: data.statPoints,
       mainStats: data.mainStats,
+      innateStats: data.innateStats,
     })
     subStats.setLevels(data.subStats)
     stage.setStage(data.currentStage, data.maxClearedStage)
@@ -98,6 +99,7 @@ export const useSaveStore = defineStore('save', () => {
       exp: player.exp,
       statPoints: player.statPoints,
       mainStats: { ...player.mainStats },
+      innateStats: { ...player.innateStats },
       subStats: subStats.collectLevels(),
       currentStage: stage.currentStage,
       maxClearedStage: stage.maxClearedStage,
