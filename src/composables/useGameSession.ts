@@ -28,6 +28,11 @@ export function useGameSession() {
     }
   }
 
+  // watch()가 onMounted의 await 이후(비동기 콜백 안)에서 생성되면 Vue가 컴포넌트 effect scope에
+  // 자동으로 묶어주지 못해(vue/no-watch-after-await) unmount 시 저절로 정리되지 않는다.
+  // stop 핸들을 직접 들고 있다가 onUnmounted에서 명시적으로 호출해야 한다.
+  let stopSaveWatch: (() => void) | null = null
+
   onMounted(async () => {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
@@ -49,7 +54,7 @@ export function useGameSession() {
     const achievement = useAchievementStore()
     const meta = useMetaStore()
 
-    watch(
+    stopSaveWatch = watch(
       [
         () => currency.gold,
         () => player.level,
@@ -75,6 +80,7 @@ export function useGameSession() {
 
   onUnmounted(() => {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
+    stopSaveWatch?.()
     gameLoop.stop()
     void save.saveNow()
   })
