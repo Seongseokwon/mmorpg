@@ -20,13 +20,13 @@ test.describe('버전 마이그레이션', () => {
     await expect(page.getByTestId('currency-gold')).toContainText('500')
 
     // 마이그레이션은 로드 시 메모리 상태만 바꾸고, 뭔가 상태가 바뀌어야(watch 대상) 실제로
-    // IndexedDB에 v4 포맷으로 다시 저장된다 — 그 저장 경로까지 함께 확인한다.
+    // IndexedDB에 최신 포맷으로 다시 저장된다 — 그 저장 경로까지 함께 확인한다.
     await page.getByTestId('nav-character').click()
     await page.getByTestId('stat-alloc-str').click()
 
     await expect
       .poll(async () => (await readSaveRecord(page))?.version, { timeout: 5_000 })
-      .toBe(4)
+      .toBe(5)
 
     const record = await readSaveRecord(page)
     expect(record?.mainStats.str).toBe(9)

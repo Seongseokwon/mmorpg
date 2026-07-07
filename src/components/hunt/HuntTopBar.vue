@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player.store'
 import { useCurrencyStore } from '@/stores/currency.store'
@@ -7,6 +7,7 @@ import { useStageStore } from '@/stores/stage.store'
 import { useBattleStore } from '@/stores/battle.store'
 import { useEquipmentStore } from '@/stores/equipment.store'
 import { useAuthStore } from '@/stores/auth.store'
+import NicknameModal from '@/components/modal/NicknameModal.vue'
 
 const player = usePlayerStore()
 const currency = useCurrencyStore()
@@ -25,6 +26,8 @@ const stageProgress = computed(() => {
 const combatPower = computed(
   () => player.attack + equipment.totalAttackBonus + equipment.totalHpBonus,
 )
+
+const showNicknameModal = ref(false)
 
 const accountLabel = computed(() => (auth.isLoggedIn ? '👤' : '🔑'))
 const accountTitle = computed(() =>
@@ -48,7 +51,13 @@ async function handleAccountClick(): Promise<void> {
     <div class="top-bar__profile">
       <div class="top-bar__avatar">🧑‍🚀</div>
       <div class="top-bar__profile-text">
-        <span class="top-bar__name overlay-text">모험가</span>
+        <span
+          class="top-bar__name overlay-text"
+          data-testid="player-nickname"
+          @click="showNicknameModal = true"
+        >
+          {{ player.nickname }}
+        </span>
         <span class="top-bar__power overlay-text">⚔ {{ combatPower.toLocaleString() }}</span>
       </div>
     </div>
@@ -73,6 +82,10 @@ async function handleAccountClick(): Promise<void> {
       {{ accountLabel }}
     </button>
   </header>
+
+  <!-- header의 backdrop-filter(hunt-glass)가 position:fixed 자식의 containing block이 되어버려서
+       모달이 헤더 박스 안에 갇히는 걸 막기 위해, 모달은 header 바깥의 형제 노드로 둔다. -->
+  <NicknameModal v-if="showNicknameModal" @close="showNicknameModal = false" />
 </template>
 
 <style scoped>
@@ -134,6 +147,7 @@ async function handleAccountClick(): Promise<void> {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .top-bar__power {

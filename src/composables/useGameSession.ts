@@ -76,6 +76,7 @@ export function useGameSession() {
     stopSaveWatch = watch(
       [
         () => currency.gold,
+        () => player.nickname,
         () => player.level,
         () => player.exp,
         () => player.statPoints,

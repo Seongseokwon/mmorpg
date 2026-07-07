@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { normalizeEquipmentList } from '@/services/equipmentService'
+import { generateDefaultNickname } from '@/services/nicknameService'
 import { rollInnateStats } from '@/services/statCalc'
 import type { Equipment, MainStats, SaveData } from '@/types/game'
 
@@ -65,7 +66,7 @@ function migrateFromV2(raw: Partial<SaveData>): SaveData {
 
   return {
     ...defaults,
-    version: 4,
+    version: 5,
     gold: raw.gold ?? defaults.gold,
     level: Math.max(1, 1 + Math.floor((attackLevel + hpLevel) / 4)),
     exp: raw.exp ?? 0,
@@ -99,7 +100,8 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
 
   if (raw.version < 4) {
     return {
-      version: 4,
+      version: 5,
+      nickname: raw.nickname ?? generateDefaultNickname(),
       gold: raw.gold ?? 0,
       level: raw.level ?? 1,
       exp: raw.exp ?? 0,
@@ -123,7 +125,9 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
   }
 
   return {
-    version: 4,
+    version: 5,
+    // 닉네임이 없던(v4 이하) 세이브에만 새로 발급한다 — 한 번 배정된 닉네임은 그대로 이어받는다.
+    nickname: raw.nickname ?? generateDefaultNickname(),
     gold: raw.gold ?? 0,
     level: raw.level ?? 1,
     exp: raw.exp ?? 0,
@@ -150,7 +154,10 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
 
 export function createDefaultSaveData(): SaveData {
   return {
-    version: 4,
+    version: 5,
+    // 캐릭터 "생성" 시점에 딱 한 번 발급되는 기본 닉네임(#지역코드+타임스탬프+난수). innateStats와
+    // 마찬가지로 이후 로드마다 raw.nickname을 그대로 이어받고 다시 발급하지 않는다.
+    nickname: generateDefaultNickname(),
     gold: 0,
     level: 1,
     exp: 0,

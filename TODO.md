@@ -117,7 +117,17 @@
   **여전히 범위 밖**: 여러 기기 오프라인 진행분의 충돌 병합(지금은 "마지막 로그인 기기가
   이긴다"), 리프레시 토큰 강제 폐기, 비밀번호 재설정, 랭킹, 배포.
 - [ ] IndexedDB ↔ 서버 세이브의 진짜 충돌 병합 (지금은 "재로그인 시 클라우드가 이 기기를 덮어쓴다"는 단순 규칙만 있음)
-- [ ] 랭킹 시스템
+- [x] **캐릭터 닉네임 — 2026-07-07 완료**. 랭킹 시스템(다음 항목)에서 플레이어를 구분해 보여줄
+  표시 이름이 필요해 먼저 구현. 캐릭터 생성 시 `#지역코드+YYYYMMDDHHmmss+3자리 난수`
+  형식(예: `#KR20260707145212345`)으로 겹치지 않는 기본 닉네임을 자동 발급(`nicknameService.ts`의
+  `generateDefaultNickname()`), 상단바(`HuntTopBar`)에서 닉네임을 눌러 2~12자로 자유롭게 변경 가능
+  (`NicknameModal.vue`). `SaveData`에 `nickname` 필드 추가하며 버전 v4 → v5로 마이그레이션
+  분기 추가(`saveService.ts`) — 게스트/클라우드 세이브 모두 기존 동기화 경로를 그대로 타므로 백엔드
+  API 변경은 없음(닉네임도 `Save.data` JSON 블롭에 그대로 실려감). 작업 중 발견한 버그: 모달을
+  `backdrop-filter`(`hunt-glass`) 적용된 `<header>` 안에 넣었더니 그 조상이 `position:fixed`의
+  containing block이 되어버려 모달이 화면 구석에 짜부라져 보이는 문제 — 헤더 바깥 형제 노드로
+  옮겨서 수정(`docs/dev-guide.md` 9절 Gotchas에 기록). E2E: `tests/e2e/growth/nickname.spec.ts`.
+- [ ] 랭킹 시스템 (닉네임 필드가 이제 준비됐으니 다음 순서로 진행 가능)
 - [x] **배포 환경/호스팅 결정 + 백엔드 배포 준비 — 2026-07-07 완료**. 프론트=Vercel, 백엔드=Render
   (상시 구동 Node 프로세스 + 관리형 Postgres — Vercel 서버리스는 Prisma 커넥션 풀 고갈/콜드스타트
   문제로 배제). 레포 루트 `render.yaml` Blueprint 추가. 프론트/백엔드가 서로 다른 도메인이 되므로

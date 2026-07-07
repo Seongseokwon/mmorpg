@@ -69,7 +69,7 @@ src/
   engine/         (아직 비어있음)
   game/           PixiJS 렌더러 (GameRenderer.ts, assets.ts, layoutConstants.ts). Vue/Pinia를 몰라야 한다
   router/         Vue Router 라우트 정의 (index.ts) — landing/login/register/game 4개 라우트
-  services/       순수 계산 함수 (damageCalc, equipmentService, gameLoop, rewardService, saveService, statCalc)
+  services/       순수 계산 함수 (damageCalc, equipmentService, gameLoop, nicknameService, rewardService, saveService, statCalc)
   stores/         Pinia 스토어 = 게임 상태 (achievement, auth, battle, currency, equipment, gacha, inventory, meta, player, reward, save, skill, stage, substats)
   systems/        (아직 비어있음)
   types/          공용 TypeScript 타입 (game.ts)
@@ -117,7 +117,7 @@ src/
     사용자 액션(장비 교체, 가챠 결과 등)은 `scheduleSave()` 대신 `saveNow()`를 직접 부르는 걸
     고려한다.
 - **마이그레이션**: `SaveData.version`이 있다. 예전 버전 세이브를 읽으면 `migrateSaveData()`가
-  최신 버전(v4) 포맷으로 변환한다. 세이브 스키마에 필드를 추가/변경할 때는 버전을 올리고
+  최신 버전(v5) 포맷으로 변환한다. 세이브 스키마에 필드를 추가/변경할 때는 버전을 올리고
   마이그레이션 분기를 추가해야, 이미 게임을 하던 유저의 저장 데이터가 깨지지 않는다.
   `tests/e2e/save/migration.spec.ts`에서 이 로직을 검증한다.
 
@@ -242,6 +242,14 @@ npx playwright test tests/e2e/save   # 특정 폴더만
   `useInventoryStore()`로 지연 호출하는 식으로 서로 참조한다. 모듈 최상단에서 즉시 호출하지 않고
   함수 내부에서 호출하면 순환 import 문제가 안 생긴다 — 기존 store들이 이 패턴을 쓰고 있으니 따라
   하면 된다.
+- **`position: fixed` 모달이 화면 전체가 아니라 좁은 박스 안에 갇혀 보일 때**: `HuntTopBar`처럼
+  `backdrop-filter`(`.hunt-glass` 클래스)가 걸린 조상 엘리먼트 안에 모달을 렌더링하면, 그 조상이
+  `position: fixed` 자식의 containing block이 되어버려 모달이 뷰포트가 아니라 그 조상의 작은
+  박스 기준으로 위치잡힌다(`filter`/`backdrop-filter`/`transform`/`perspective`/`contain` 모두 이
+  효과가 있다). 실제로 `NicknameModal`을 `<header class="hunt-glass">` 내부에 넣었다가 상단에
+  짜부라져 보이는 버그가 났다 — 모달은 그런 조상 바깥의 형제 노드로 렌더링해야 한다(Vue 3
+  멀티 루트 템플릿으로 `</header>` 뒤에 나란히 두면 된다). `EnhanceModal`이 문제없이 동작하는 건
+  `GameSheet`(필터 없는 조상) 하위에서 렌더링되기 때문이다.
 
 ---
 

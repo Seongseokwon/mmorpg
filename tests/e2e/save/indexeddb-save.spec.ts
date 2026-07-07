@@ -21,13 +21,13 @@ test.describe('IndexedDB 저장', () => {
     expect(record?.statPoints).toBe(4)
   })
 
-  test('저장된 레코드의 버전은 항상 최신(v4) 포맷이다', async ({ page }) => {
+  test('저장된 레코드의 버전은 항상 최신(v5) 포맷이다', async ({ page }) => {
     await seedSaveAndReload(page, buildSaveData())
     await page.getByTestId('nav-character').click()
     await page.getByTestId('stat-alloc-str').click()
 
     await expect
       .poll(async () => (await readSaveRecord(page))?.version, { timeout: 5_000 })
-      .toBe(4)
+      .toBe(5)
   })
 })

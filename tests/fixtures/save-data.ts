@@ -1,10 +1,11 @@
 /**
  * SaveData 스키마를 그대로 구현이 아니라 "계약"으로 복제한 픽스처.
- * src/services/saveService.ts의 SaveData(v4) 포맷과 반드시 맞아야 하며,
+ * src/services/saveService.ts의 SaveData(v5) 포맷과 반드시 맞아야 하며,
  * 앱 소스를 import하지 않고 독립적으로 유지한다(내부 구현 결합 금지).
  */
 export interface FixtureSaveData {
   version: number
+  nickname: string
   gold: number
   level: number
   exp: number
@@ -59,7 +60,8 @@ export function buildEquipment(overrides: Partial<FixtureEquipment> = {}): Fixtu
 
 export function buildSaveData(overrides: Partial<FixtureSaveData> = {}): FixtureSaveData {
   const base: FixtureSaveData = {
-    version: 4,
+    version: 5,
+    nickname: '#KR-TEST-FIXTURE',
     gold: 0,
     level: 1,
     exp: 0,

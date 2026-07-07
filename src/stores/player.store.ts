@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { STAT_POINTS_PER_LEVEL } from '@/data/statData'
+import { generateDefaultNickname, validateNickname } from '@/services/nicknameService'
 import {
   getAttackFromMainStats,
   getExpToNextLevel,
@@ -14,6 +15,7 @@ const DEFAULT_MAIN_STATS: MainStats = { str: 1, vit: 1, dex: 1, luk: 1 }
 const DEFAULT_INNATE_STATS: MainStats = { str: 0, vit: 0, dex: 0, luk: 0 }
 
 export const usePlayerStore = defineStore('player', () => {
+  const nickname = ref(generateDefaultNickname())
   const level = ref(1)
   const exp = ref(0)
   const statPoints = ref(5)
@@ -99,13 +101,23 @@ export const usePlayerStore = defineStore('player', () => {
     return true
   }
 
+  /** 유효성 검사 후 닉네임을 바꾼다. 실패 시 에러 메시지를, 성공 시 null을 반환한다. */
+  function setNickname(newNickname: string): string | null {
+    const error = validateNickname(newNickname)
+    if (error) return error
+    nickname.value = newNickname
+    return null
+  }
+
   function setPlayerData(data: {
+    nickname: string
     level: number
     exp: number
     statPoints: number
     mainStats: MainStats
     innateStats: MainStats
   }): void {
+    nickname.value = data.nickname
     level.value = data.level
     exp.value = data.exp
     statPoints.value = data.statPoints
@@ -115,6 +127,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   return {
+    nickname,
     level,
     exp,
     statPoints,
@@ -134,6 +147,7 @@ export const usePlayerStore = defineStore('player', () => {
     heal,
     addExp,
     addStatPoints,
+    setNickname,
     allocateStat,
     setPlayerData,
   }

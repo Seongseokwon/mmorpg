@@ -84,6 +84,7 @@ export interface Monster {
 
 export interface SaveData {
   version: number
+  nickname: string
   gold: number
   level: number
   exp: number

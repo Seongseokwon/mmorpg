@@ -101,6 +101,7 @@ export const useSaveStore = defineStore('save', () => {
 
     currency.setGold(data.gold)
     player.setPlayerData({
+      nickname: data.nickname,
       level: data.level,
       exp: data.exp,
       statPoints: data.statPoints,
@@ -136,7 +137,8 @@ export const useSaveStore = defineStore('save', () => {
     reward.touchActive()
 
     return {
-      version: 4,
+      version: 5,
+      nickname: player.nickname,
       gold: currency.gold,
       level: player.level,
       exp: player.exp,

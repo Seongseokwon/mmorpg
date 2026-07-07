@@ -5,6 +5,39 @@
 
 ---
 
+## 2026-07-07 (7) — 캐릭터 닉네임 추가 (랭킹 시스템 사전 작업)
+
+랭킹 시스템 설계 논의 중 사용자가 "랭킹에 표시할 닉네임이 필요하다"며 요청. 요구사항: 캐릭터 생성
+시 `#KR202507071452123` 같은 지역+타임스탬프 형식의 겹치지 않는 기본 닉네임 자동 배정, 이후
+사용자가 자유롭게 변경 가능.
+
+**설계**: `nicknameService.ts`의 `generateDefaultNickname()`이 `#{지역코드}{YYYYMMDDHHmmss}{3자리
+난수}`(17자리, 초 단위 타임스탬프까지 넣어 사용자가 준 예시보다 충돌 저항성을 높임)를 생성. DB
+유니크 제약은 의도적으로 안 걸었다 — 기본 닉네임 자체가 초+난수로 사실상 유일하고, 랭킹에서
+사용자가 바꾼 커스텀 닉네임끼리 중복되는 건 대부분의 게임처럼 허용해도 무방하다고 판단
+(내부적으로는 계정/세이브의 `userId`로 구분되므로 표시 이름 중복은 실질적 문제가 안 됨).
+
+**저장 위치**: 새 백엔드 테이블/엔드포인트를 만들지 않고 `SaveData.nickname` 필드로 추가 —
+게스트(IndexedDB)든 클라우드 로그인 유저든 기존 세이브 동기화 경로(바로 아래 "랜딩/로그인/회원가입
+화면 + 백엔드 실연동" 항목 참고)를 그대로 타므로 통합 비용이 거의 없었다. `saveService.ts`에서
+버전을 v4 → v5로 올리고 마이그레이션 분기 추가(기존 세이브는 로드 시 `nickname` 없으면 새로 발급).
+
+**버그 발견 (스크린샷으로 직접 확인)**: `NicknameModal`을 처음에 `HuntTopBar`의 `<header
+class="hunt-glass">` 내부 자식으로 렌더링했더니, 모달이 화면 중앙이 아니라 헤더 높이만한 좁은
+박스 안에 짜부라져 보였다. 원인: `.hunt-glass`의 `backdrop-filter: blur(6px)`가 `position: fixed`
+자식의 containing block을 뷰포트가 아니라 그 헤더 엘리먼트로 바꿔버림(`filter`/`backdrop-filter`/
+`transform`/`perspective`/`contain` 모두 이 효과가 있음 — CSS 스펙 사항이라 브라우저 버그가
+아니다). 기존 `EnhanceModal`은 필터 없는 `GameSheet` 하위에서 렌더링돼서 문제가 없었던 것.
+Playwright로 `page.screenshot()` 찍어서 실제로 확인 후 발견 — 텍스트 기반 E2E 어서션만으로는 이
+레이아웃 버그를 못 잡았을 것(모달 자체는 DOM에 존재하고 클릭도 다 되니 기능 테스트는 통과함).
+수정: 모달을 `</header>` 바깥의 형제 노드로 이동(Vue 3 멀티 루트 템플릿). 앞으로 새 모달을 추가할
+때 `hunt-glass`류 조상 안에 넣지 않도록 `docs/dev-guide.md` 9절(Gotchas)에 기록해둠.
+
+`npx vue-tsc -b` + Playwright e2e 47개(desktop) + 5개(mobile) 전체 통과, 스크린샷으로 모달 위치
+수정 후 재확인.
+
+---
+
 ## 2026-07-07 (6) — Render 배포 준비 (프론트=Vercel, 백엔드=Render)
 
 사용자가 Railway 무료 크레딧을 이미 소진해서 Render로 백엔드를 배포하기로 결정. Vercel에
