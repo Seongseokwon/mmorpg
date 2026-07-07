@@ -337,6 +337,7 @@ export const useBattleStore = defineStore('battle', () => {
     tryDropEquipment()
 
     if (killed.isBoss) {
+      useMetaStore().incrementBossKills()
       resolveVictory()
       return
     }

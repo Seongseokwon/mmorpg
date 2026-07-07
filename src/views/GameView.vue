@@ -36,6 +36,7 @@ const navTitles: Record<NavId, string> = {
   equipment: '장비',
   skill: '스킬',
   reward: '보상',
+  achievement: '업적',
   stage: '스테이지',
 }
 
@@ -128,6 +129,8 @@ function closeSheet(): void {
       <template v-else-if="activeNav === 'reward'">
         <DailyRewardPanel />
         <GachaPanel />
+      </template>
+      <template v-else-if="activeNav === 'achievement'">
         <AchievementPanel />
       </template>
       <template v-else-if="activeNav === 'stage'">

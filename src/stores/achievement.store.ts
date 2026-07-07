@@ -6,6 +6,7 @@ import { useCurrencyStore } from './currency.store'
 import { useInventoryStore } from './inventory.store'
 import { useMetaStore } from './meta.store'
 import { usePlayerStore } from './player.store'
+import { useRewardStore } from './reward.store'
 import { useStageStore } from './stage.store'
 
 export const useAchievementStore = defineStore('achievement', () => {
@@ -34,10 +35,13 @@ export const useAchievementStore = defineStore('achievement', () => {
     const meta = useMetaStore()
     const player = usePlayerStore()
     const stage = useStageStore()
+    const reward = useRewardStore()
 
     switch (trackKey) {
       case 'totalKills':
         return meta.stats.totalKills
+      case 'totalBossKills':
+        return meta.stats.totalBossKills
       case 'totalGachaPulls':
         return meta.stats.totalGachaPulls
       case 'totalEnhances':
@@ -46,6 +50,8 @@ export const useAchievementStore = defineStore('achievement', () => {
         return stage.maxClearedStage
       case 'level':
         return player.level
+      case 'dailyStreak':
+        return reward.dailyReward.streak
       default:
         return 0
     }
@@ -54,10 +60,12 @@ export const useAchievementStore = defineStore('achievement', () => {
   function applyReward(reward: AchievementReward): void {
     const currency = useCurrencyStore()
     const inventory = useInventoryStore()
+    const player = usePlayerStore()
 
     if (reward.meso) currency.addGold(reward.meso)
     if (reward.potion) inventory.addConsumable('potion', reward.potion)
     if (reward.scroll) inventory.addConsumable('scroll', reward.scroll)
+    if (reward.statPoints) player.addStatPoints(reward.statPoints)
   }
 
   function claim(achievementId: string): boolean {

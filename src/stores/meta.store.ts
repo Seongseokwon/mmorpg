@@ -6,6 +6,7 @@ const DEFAULT_META: MetaStats = {
   totalKills: 0,
   totalGachaPulls: 0,
   totalEnhances: 0,
+  totalBossKills: 0,
 }
 
 export const useMetaStore = defineStore('meta', () => {
@@ -23,6 +24,10 @@ export const useMetaStore = defineStore('meta', () => {
     stats.value.totalEnhances += amount
   }
 
+  function incrementBossKills(amount = 1): void {
+    stats.value.totalBossKills += amount
+  }
+
   function setStats(data: MetaStats): void {
     stats.value = { ...data }
   }
@@ -36,6 +41,7 @@ export const useMetaStore = defineStore('meta', () => {
     incrementKills,
     incrementGachaPulls,
     incrementEnhances,
+    incrementBossKills,
     setStats,
     collectStats,
   }

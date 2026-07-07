@@ -138,7 +138,9 @@ function migrateSaveData(raw: Partial<SaveData> & Record<string, unknown>): Save
     gachaPity: raw.gachaPity ?? 0,
     achievements: raw.achievements ?? {},
     dailyReward: raw.dailyReward ?? { ...defaults.dailyReward },
-    meta: raw.meta ?? { ...defaults.meta },
+    // 스프레드 병합: v4 저장 이후에 meta 필드가 추가되는 경우(예: totalBossKills)에도
+    // 기존 세이브에 없던 키는 기본값으로 채워진다.
+    meta: { ...defaults.meta, ...raw.meta },
     lastActiveAt: raw.lastActiveAt ?? Date.now(),
   }
 }
@@ -174,7 +176,7 @@ export function createDefaultSaveData(): SaveData {
     gachaPity: 0,
     achievements: {},
     dailyReward: { lastClaimDate: '', streak: 0 },
-    meta: { totalKills: 0, totalGachaPulls: 0, totalEnhances: 0 },
+    meta: { totalKills: 0, totalGachaPulls: 0, totalEnhances: 0, totalBossKills: 0 },
     lastActiveAt: Date.now(),
   }
 }

@@ -27,7 +27,7 @@ export interface FixtureSaveData {
   gachaPity: number
   achievements: Record<string, { claimed: boolean }>
   dailyReward: { lastClaimDate: string; streak: number }
-  meta: { totalKills: number; totalGachaPulls: number; totalEnhances: number }
+  meta: { totalKills: number; totalGachaPulls: number; totalEnhances: number; totalBossKills: number }
   lastActiveAt: number
 }
 
@@ -87,7 +87,7 @@ export function buildSaveData(overrides: Partial<FixtureSaveData> = {}): Fixture
     gachaPity: 0,
     achievements: {},
     dailyReward: { lastClaimDate: '', streak: 0 },
-    meta: { totalKills: 0, totalGachaPulls: 0, totalEnhances: 0 },
+    meta: { totalKills: 0, totalGachaPulls: 0, totalEnhances: 0, totalBossKills: 0 },
     lastActiveAt: Date.now(),
   }
 

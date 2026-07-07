@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export type NavId = 'character' | 'equipment' | 'skill' | 'reward' | 'stage'
+export type NavId = 'character' | 'equipment' | 'skill' | 'reward' | 'achievement' | 'stage'
 
 defineProps<{
   active: NavId | null
@@ -15,6 +15,7 @@ const navItems: { id: NavId; label: string; icon: string }[] = [
   { id: 'equipment', label: '장비', icon: '🛡️' },
   { id: 'skill', label: '스킬', icon: '✨' },
   { id: 'reward', label: '보상', icon: '🎁' },
+  { id: 'achievement', label: '업적', icon: '🏆' },
   { id: 'stage', label: '스테이지', icon: '🗺️' },
 ]
 </script>
@@ -32,7 +33,7 @@ const navItems: { id: NavId; label: string; icon: string }[] = [
       <span class="nav-bar__icon">{{ item.icon }}</span>
       <span class="nav-bar__label overlay-text">{{ item.label }}</span>
       <span
-        v-if="item.id === 'reward' && badgeCount && badgeCount > 0"
+        v-if="item.id === 'achievement' && badgeCount && badgeCount > 0"
         class="nav-bar__badge"
       />
     </button>

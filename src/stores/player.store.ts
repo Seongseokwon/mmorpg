@@ -66,6 +66,11 @@ export const usePlayerStore = defineStore('player', () => {
     return levelsGained
   }
 
+  function addStatPoints(amount: number): void {
+    if (amount <= 0) return
+    statPoints.value += amount
+  }
+
   function allocateStat(statId: MainStatId): boolean {
     if (statPoints.value <= 0) return false
     mainStats.value[statId] += 1
@@ -104,6 +109,7 @@ export const usePlayerStore = defineStore('player', () => {
     takeDamage,
     heal,
     addExp,
+    addStatPoints,
     allocateStat,
     setPlayerData,
   }

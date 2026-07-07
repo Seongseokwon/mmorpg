@@ -1,21 +1,29 @@
 <script setup lang="ts">
 import { useAchievementStore } from '@/stores/achievement.store'
+import { formatNumber } from '@/services/damageCalc'
+import type { AchievementReward } from '@/types/game'
 
 const achievement = useAchievementStore()
 
 function claim(id: string): void {
   achievement.claim(id)
 }
+
+function formatReward(reward: AchievementReward): string {
+  const parts: string[] = []
+  if (reward.meso) parts.push(`${formatNumber(reward.meso)} 루나`)
+  if (reward.statPoints) parts.push(`스탯 포인트 +${reward.statPoints}`)
+  if (reward.potion) parts.push(`체력 포션 x${reward.potion}`)
+  if (reward.scroll) parts.push(`강화 주문서 x${reward.scroll}`)
+  return parts.join(' · ')
+}
 </script>
 
 <template>
   <section class="achievement panel">
-    <div class="achievement__header">
-      <h2 class="panel__title">업적</h2>
-      <span v-if="achievement.claimableCount > 0" class="achievement__badge">
-        {{ achievement.claimableCount }}
-      </span>
-    </div>
+    <p v-if="achievement.claimableCount > 0" class="achievement__hint">
+      🎁 수령 가능한 업적 보상이 {{ achievement.claimableCount }}개 있어요
+    </p>
 
     <ul class="achievement__list">
       <li
@@ -37,7 +45,10 @@ function claim(id: string): void {
               :style="{ width: `${(ach.current / ach.target) * 100}%` }"
             />
           </div>
-          <span class="achievement__count">{{ ach.current }} / {{ ach.target }}</span>
+          <div class="achievement__meta">
+            <span class="achievement__count">{{ ach.current }} / {{ ach.target }}</span>
+            <span class="achievement__reward">🎁 {{ formatReward(ach.reward) }}</span>
+          </div>
         </div>
         <button
           v-if="ach.canClaim"
@@ -58,24 +69,15 @@ function claim(id: string): void {
   padding: 0.75rem 1rem;
 }
 
-.achievement__header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.achievement__header .panel__title {
-  margin-bottom: 0;
-}
-
-.achievement__badge {
-  background: var(--color-accent);
-  color: #fff;
+.achievement__hint {
   font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+  font-weight: 600;
+  color: var(--color-accent-gold);
+  background: rgba(245, 197, 66, 0.12);
+  border: 1px solid rgba(245, 197, 66, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .achievement__list {
@@ -83,8 +85,6 @@ function claim(id: string): void {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  max-height: 220px;
-  overflow-y: auto;
 }
 
 .achievement__item {
@@ -137,9 +137,27 @@ function claim(id: string): void {
   background: linear-gradient(90deg, #c77dff, #e94560);
 }
 
+.achievement__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
 .achievement__count {
   font-size: 0.6rem;
   color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.achievement__reward {
+  font-size: 0.6rem;
+  color: var(--color-accent-gold);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .achievement__claim {

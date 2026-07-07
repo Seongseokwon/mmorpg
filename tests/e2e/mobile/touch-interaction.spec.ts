@@ -8,7 +8,7 @@ test.describe('터치 인터랙션', () => {
   test('하단 네비게이션 버튼들이 실수 없이 탭할 수 있는 크기를 갖는다', async ({ page }) => {
     await page.goto('/')
 
-    for (const id of ['nav-character', 'nav-equipment', 'nav-skill', 'nav-reward', 'nav-stage']) {
+    for (const id of ['nav-character', 'nav-equipment', 'nav-skill', 'nav-reward', 'nav-achievement', 'nav-stage']) {
       const box = await page.getByTestId(id).boundingBox()
       expect(box, `${id} 버튼의 bounding box를 찾을 수 없음`).not.toBeNull()
       expect(box!.height, `${id} 버튼 높이가 너무 작음`).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET_PX)

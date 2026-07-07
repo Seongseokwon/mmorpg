@@ -134,6 +134,8 @@ export interface AchievementReward {
   meso?: number
   potion?: number
   scroll?: number
+  /** 캐릭터 화면에서 자유 배분 가능한 스탯 포인트. 어려운 업적일수록 이걸 얹어 성장 체감을 준다. */
+  statPoints?: number
 }
 
 export interface AchievementDef {
@@ -159,6 +161,7 @@ export interface MetaStats {
   totalKills: number
   totalGachaPulls: number
   totalEnhances: number
+  totalBossKills: number
 }
 
 export interface OfflineRewardState {
