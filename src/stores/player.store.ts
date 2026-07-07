@@ -19,7 +19,10 @@ export const usePlayerStore = defineStore('player', () => {
   const hp = ref(getHpFromMainStats(mainStats.value))
 
   const expToNext = computed(() => getExpToNextLevel(level.value))
-  const expPercent = computed(() => Math.min(100, (exp.value / expToNext.value) * 100))
+  const expPercent = computed(() => {
+    const percent = Math.min(100, (exp.value / expToNext.value) * 100)
+    return Math.round(percent * 1000) / 1000
+  })
 
   const baseAttack = computed(() => getAttackFromMainStats(mainStats.value))
   const baseMaxHp = computed(() => getHpFromMainStats(mainStats.value))
