@@ -86,6 +86,26 @@ function closeSheet(): void {
         </div>
       </Transition>
 
+      <Transition name="toast">
+        <div
+          v-if="battle.lastBossResult?.type === 'victory'"
+          class="hunt-toast hunt-toast--victory"
+          data-testid="boss-victory-toast"
+        >
+          🏆 스테이지 {{ battle.lastBossResult.stage }} 보스 처치! 다음 스테이지로 진행합니다
+        </div>
+      </Transition>
+
+      <Transition name="toast">
+        <div
+          v-if="battle.lastBossResult?.type === 'defeat'"
+          class="hunt-toast hunt-toast--defeat"
+          data-testid="boss-defeat-toast"
+        >
+          💀 보스전 실패... 다시 강해져서 도전하세요
+        </div>
+      </Transition>
+
       <div v-if="save.isLoaded && !save.isSaveAvailable" class="hunt-toast hunt-toast--warning">
         ⚠️ 저장 불가 - 진행 상황이 저장되지 않습니다
       </div>
@@ -199,6 +219,26 @@ function closeSheet(): void {
   background: rgba(10, 14, 28, 0.9);
   border: 1px solid #7ec8ff;
   color: #7ec8ff;
+}
+
+.hunt-toast--victory {
+  top: 18%;
+  background: rgba(10, 14, 28, 0.92);
+  border: 1px solid #f5c542;
+  color: #f5c542;
+  white-space: normal;
+  text-align: center;
+  max-width: 85%;
+}
+
+.hunt-toast--defeat {
+  top: 18%;
+  background: rgba(56, 16, 16, 0.92);
+  border: 1px solid #e94560;
+  color: #ff9a9a;
+  white-space: normal;
+  text-align: center;
+  max-width: 85%;
 }
 
 .hunt-toast--warning {

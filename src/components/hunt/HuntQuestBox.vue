@@ -9,17 +9,36 @@ const stage = useStageStore()
 const player = usePlayerStore()
 
 const expanded = ref(false)
-const killProgress = computed(() => battle.killCount % 3)
+
+const phaseIcon = computed(() => (battle.stagePhase === 'boss' ? '👑' : '⚔️'))
+const phaseLabel = computed(() => {
+  if (battle.stagePhase === 'boss') return '보스전'
+  if (battle.stagePhase === 'wave') return `웨이브 ${battle.waveIndex}/${battle.wavesPerStage}`
+  return '파밍 중'
+})
+
+function startChallenge(): void {
+  battle.startChallenge()
+}
 </script>
 
 <template>
   <div class="quest-box">
-    <button class="quest-box__summary hunt-glass" @click="expanded = !expanded">
-      <span class="quest-box__icon">⚔️</span>
-      <span class="quest-box__label overlay-text">몬스터 처치</span>
-      <span class="quest-box__progress overlay-text" data-testid="quest-kill-progress">{{ killProgress }}/3</span>
-      <span class="quest-box__toggle overlay-text">{{ expanded ? '▲' : '▼' }}</span>
-    </button>
+    <div class="quest-box__summary hunt-glass">
+      <button class="quest-box__summary-toggle" @click="expanded = !expanded">
+        <span class="quest-box__icon">{{ phaseIcon }}</span>
+        <span class="quest-box__label overlay-text" data-testid="quest-phase-label">{{ phaseLabel }}</span>
+        <span class="quest-box__toggle overlay-text">{{ expanded ? '▲' : '▼' }}</span>
+      </button>
+      <button
+        v-if="battle.stagePhase === 'farming'"
+        class="quest-box__challenge-btn"
+        data-testid="challenge-button"
+        @click="startChallenge"
+      >
+        🚩 도전
+      </button>
+    </div>
 
     <div v-if="expanded" class="quest-box__detail hunt-glass">
       <div class="quest-box__item">
@@ -49,10 +68,33 @@ const killProgress = computed(() => battle.killCount % 3)
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.5rem;
+  padding: 0.3rem 0.4rem;
   width: 100%;
+}
+
+.quest-box__summary-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
   text-align: left;
   cursor: pointer;
+}
+
+.quest-box__challenge-btn {
+  flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #3b2e00;
+  background: linear-gradient(180deg, #f5c542, #d4a017);
+  white-space: nowrap;
+}
+
+.quest-box__challenge-btn:active {
+  transform: scale(0.95);
 }
 
 .quest-box__detail {

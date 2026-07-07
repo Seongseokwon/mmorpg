@@ -7,7 +7,7 @@ import {
   getMonsterWalkSpriteUrl,
 } from '@/game/assets'
 import type { BattleEvent, DamageEvent, Monster } from '@/types/game'
-import { GROUND_Y_RATIO, MONSTER_HEIGHT_RATIO } from '@/game/layoutConstants'
+import { BOSS_SCALE_MULTIPLIER, GROUND_Y_RATIO, MONSTER_HEIGHT_RATIO } from '@/game/layoutConstants'
 
 interface DamageTextObject {
   text: Text
@@ -35,6 +35,9 @@ const PLAYER_HEIGHT_RATIO = 0.48
 
 // 몬스터 걷기 프레임 전환 주기(ms). battle.store의 tick 주기와 무관하게 실제 시간 기준으로 토글한다.
 const WALK_FRAME_INTERVAL_MS = 260
+
+// 보스 전용 아트가 없으므로, 같은 스프라이트를 붉게 물들여 일반 몬스터와 구분한다 (크기 배율은 layoutConstants 참고)
+const BOSS_TINT = 0xff9a9a
 
 export class GameRenderer {
   private app: Application | null = null
@@ -238,6 +241,9 @@ export class GameRenderer {
 
       poolSlot.container.x = width * monster.x
       poolSlot.container.y = groundY
+      // 보스는 전용 아트 없이도 한눈에 구분되도록 더 크게, 붉은 톤으로 렌더링한다.
+      poolSlot.sprite.scale.set(monster.isBoss ? this.monsterScale * BOSS_SCALE_MULTIPLIER : this.monsterScale)
+      poolSlot.sprite.tint = monster.isBoss ? BOSS_TINT : 0xffffff
 
       const desiredUrl = monster.moving
         ? getMonsterWalkSpriteUrl(monster.sprite, walkFrameA)

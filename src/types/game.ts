@@ -78,6 +78,8 @@ export interface Monster {
   moving: boolean
   /** 목적지 도착 후 다음 이동 전까지 잠시 멈춰있는 남은 시간(ms) */
   pauseMs: number
+  /** 스테이지 웨이브를 모두 클리어한 뒤 등장하는 보스인지 여부 (렌더러/HP바 표시 분기용) */
+  isBoss: boolean
 }
 
 export interface SaveData {

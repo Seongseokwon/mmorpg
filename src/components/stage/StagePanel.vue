@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useStageStore } from '@/stores/stage.store'
 import { useBattleStore } from '@/stores/battle.store'
 
 const stage = useStageStore()
 const battle = useBattleStore()
+
+const phaseHint = computed(() => {
+  if (battle.stagePhase === 'boss') return '보스전 진행 중...'
+  if (battle.stagePhase === 'wave') return `웨이브 ${battle.waveIndex}/${battle.wavesPerStage} 진행 중...`
+  return '웨이브를 모두 막아내고 보스를 처치하면 다음 스테이지로 진행합니다'
+})
 
 function prevStage(): void {
   stage.prevStage()
@@ -15,6 +22,10 @@ function nextStage(): void {
     stage.goToStage(stage.currentStage + 1)
     battle.resetMonsters()
   }
+}
+
+function startChallenge(): void {
+  battle.startChallenge()
 }
 </script>
 
@@ -43,7 +54,17 @@ function nextStage(): void {
         ▶
       </button>
     </div>
-    <p class="stage__hint">3마리 처치마다 자동으로 다음 스테이지</p>
+
+    <button
+      v-if="battle.stagePhase === 'farming'"
+      class="btn btn--gold stage__challenge"
+      data-testid="stage-challenge-button"
+      @click="startChallenge"
+    >
+      🚩 보스 도전
+    </button>
+
+    <p class="stage__hint">{{ phaseHint }}</p>
   </section>
 </template>
 
@@ -80,6 +101,12 @@ function nextStage(): void {
 .stage__cleared {
   font-size: 0.7rem;
   color: var(--color-text-muted);
+}
+
+.stage__challenge {
+  display: flex;
+  width: 100%;
+  margin-top: 0.75rem;
 }
 
 .stage__hint {

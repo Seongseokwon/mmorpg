@@ -12,7 +12,11 @@ const stage = useStageStore()
 const battle = useBattleStore()
 const equipment = useEquipmentStore()
 
-const stageProgress = computed(() => battle.killCount % 3)
+const stageProgress = computed(() => {
+  if (battle.stagePhase === 'boss') return '보스전'
+  if (battle.stagePhase === 'wave') return `웨이브 ${battle.waveIndex}/${battle.wavesPerStage}`
+  return '파밍'
+})
 
 const combatPower = computed(
   () => player.attack + equipment.totalAttackBonus + equipment.totalHpBonus,
@@ -31,7 +35,7 @@ const combatPower = computed(
 
     <div class="top-bar__stage">
       <span class="top-bar__stage-map overlay-text" data-testid="stage-current">사냥터 {{ stage.currentStage }}</span>
-      <span class="top-bar__stage-progress overlay-text">{{ stageProgress }}/3</span>
+      <span class="top-bar__stage-progress overlay-text" data-testid="stage-phase-badge">{{ stageProgress }}</span>
     </div>
 
     <div class="top-bar__currency">
@@ -125,10 +129,11 @@ const combatPower = computed(
 }
 
 .top-bar__stage-progress {
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #fff;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .top-bar__currency {

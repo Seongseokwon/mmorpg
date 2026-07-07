@@ -9,3 +9,6 @@ export const GROUND_Y_RATIO = 0.82
 
 /** 몬스터 스프라이트 높이 = 스테이지 박스 높이 * 이 비율 */
 export const MONSTER_HEIGHT_RATIO = 0.34
+
+/** 보스는 전용 아트 없이 같은 스프라이트를 이 배율만큼 키워서 그린다 (GameRenderer.syncMonsters 참고) */
+export const BOSS_SCALE_MULTIPLIER = 1.8
