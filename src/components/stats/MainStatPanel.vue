@@ -136,6 +136,9 @@ function allocate(statId: MainStatId): void {
 .main-stat__btn-value {
   font-size: 1.1rem;
   font-weight: 800;
+  /* 명시적으로 지정하지 않으면 버튼이 disabled(포인트 소진)될 때 브라우저 기본 비활성 텍스트
+     색상(어두운 회색)이 적용되어 어두운 카드 배경과 거의 구분되지 않는다. */
+  color: var(--color-text);
 }
 
 .main-stat__btn-effect {
