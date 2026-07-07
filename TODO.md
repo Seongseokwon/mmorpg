@@ -21,6 +21,20 @@
   몬스터 드롭에 더 쉽게 교체됨 — 성장 루프 핵심 투자를 조용히 무효화. **2026-07-06 수정 완료**
   (`compareEquipment`가 `scoreA - scoreB`를 반환하도록 부호 수정). 회귀 테스트:
   `tests/e2e/regression/auto-equip-inverted.spec.ts` (통과 확인).
+- [x] **업적을 하나라도 수령하면 그 순간부터 IndexedDB 저장이 영구히 실패함** —
+  `achievement.store.ts`의 `collectProgress()`가 `{ ...progress.value }`로 얕게만 복사해서, 각
+  `{ claimed }` 항목이 Vue reactive Proxy 참조로 남아있었다. IndexedDB(구조화 복제)가 Proxy를
+  직렬화 못해 `DataCloneError: Proxy object could not be cloned`로 저장 자체가 실패 — "저장 불가"
+  배너가 뜨고 그 뒤로 어떤 진행상황도 저장 안 됨(클라우드 동기화도 로컬 저장과 무관하게 같이
+  실패하진 않지만, 게스트는 진행상황을 통째로 잃을 수 있는 심각한 버그). **2026-07-07 수정
+  완료** — 사용자가 실제 프로덕션(모바일 Safari + 노트북 Firefox)에서 겪은 걸 제보받아 Firefox
+  콘솔 에러(`Proxy object could not be cloned`)로 원인 특정, `collectProgress()`가 각 항목도
+  `{ ...entry }`로 다시 스프레드하도록 수정. 깨끗한 계정/브라우저로는 재현이 안 되고 실제 업적을
+  수령해야만 트리거되는 버그라 진단에 실제 Firefox 재현(로컬 스크립트)이 필요했음 — 자세한 진단
+  과정은 MEMORY.md 참고. 회귀 테스트:
+  `tests/e2e/regression/achievement-claim-save-clone-error.spec.ts` (통과 확인). 같은 세션에서
+  Firefox가 콘솔에 띄운 별개의 경고(`refreshToken` 쿠키에 `Partitioned` 속성 없음)도 함께 수정 —
+  `auth.constants.ts`의 `refreshCookieOptions()`에 프로덕션 한정 `partitioned: true` 추가.
 
 ## 🟠 Major 버그
 

@@ -5,6 +5,49 @@
 
 ---
 
+## 2026-07-07 (9) — "저장 불가" 배너 상시 발생 버그 진단 + 수정
+
+사용자가 아이폰 Safari에서 "저장 불가" 배너가 계속 뜬다고 제보. 처음엔 iOS Safari의 IndexedDB
+불안정성(ITP 7일 캡, WebKit 버그 등)을 의심했으나, 사용자가 "노트북 Firefox에서도 동일하게
+발생한다"고 알려줘서 브라우저 특정 문제가 아니라 실제 코드 버그라고 방향을 바꿨다.
+
+**진단 과정** (텍스트 추측 대신 실제로 재현):
+1. Playwright로 Firefox 브라우저를 설치(`npx playwright install firefox`)하고 프로덕션 사이트에
+   직접 접속하는 스크립트를 짜서 재현 시도.
+2. 첫 시도(깨끗한 게스트 세션), 두번째 시도(새 계정 회원가입 + 새로고침 4회)는 **재현 안 됨** —
+   콘솔에 아무 에러도 없었음.
+3. 사용자에게 정확한 콘솔 에러를 요청 → `DOMException: Proxy object could not be cloned` 받음.
+   이게 결정적 단서 — IndexedDB(구조화 복제 알고리즘)가 Vue의 reactive Proxy 객체를 직렬화하지
+   못해서 나는 에러다.
+4. `save.store.ts`의 `collectSaveData()`를 필드 하나하나 다시 훑었다. 대부분 `{ ...obj }`로
+   스프레드하고 있어 안전해 보였는데, `achievements: achievement.collectProgress()`가 의심스러웠다
+   — 그 함수가 `{ ...progress.value }`로 **한 단계만** 스프레드하고 있었다. `progress.value`는
+   `Record<string, { claimed: boolean }>`라서, 바깥 Record는 새 객체가 되지만 **각 `{claimed}`
+   값은 여전히 원본 reactive Proxy 참조**로 남는다 — 딱 하나 있는 "한 단계 깊이 이상 중첩된
+   객체를 담은 Record" 필드였다(다른 모든 필드는 완전히 평평한 구조라 얕은 스프레드로도 충분했음).
+5. 실제로 재현: Firefox로 계정 생성 → 첫 업적("첫 보스 처치") 수령 → 정확히 그 순간부터 "저장
+   불가" 배너 발생 + 동일한 콘솔 에러 확인. **업적을 하나도 안 받은 상태로는 `progress.value`가
+   빈 객체 `{}`라 문제가 안 생기고, 실제로 뭔가 하나라도 수령해야만 트리거되는 버그라서 처음
+   두 번의 자동화 재현(둘 다 몇 초짜리 짧은 세션)이 못 잡았던 것.**
+
+**수정**: `collectProgress()`가 각 항목도 `{ ...entry }`로 다시 스프레드하도록 변경.
+
+**교훈**: `Record<string, 객체>` 형태로 상태를 다룰 때 `{ ...record.value }`는 얕은 복사라
+불충분하다 — 값이 primitve인 Record(예: `MetaStats`, `SubStatLevels`, `DailyRewardState`)는 얕은
+스프레드로 충분하지만, 값이 객체인 Record는 그 값도 다시 스프레드해야 한다. 이 패턴이 `SaveData`
+안에 딱 하나(`achievements`) 있었던 게 다행이었고, 앞으로 비슷한 필드를 추가할 때 조심해야 함
+(`docs/dev-guide.md` 4절에 이 교훈을 기록해둠).
+
+**부수 발견 및 수정**: 같은 세션에서 Firefox 콘솔에 `refreshToken` 쿠키가 `Partitioned` 속성이
+없는 cross-site 쿠키라 곧 거부될 거라는 경고도 발견. CHIPS(Cookies Having Independent
+Partitioned State) 정책 대응 — `refreshCookieOptions()`에 프로덕션 한정 `partitioned: true`
+추가(이 쿠키는 항상 우리 프론트 origin 하나에서만 쓰여서 파티셔닝해도 동작엔 영향 없음).
+
+회귀 테스트 `tests/e2e/regression/achievement-claim-save-clone-error.spec.ts` 추가. 프론트
+e2e 49개 + 백엔드 e2e 11개 전체 통과 확인.
+
+---
+
 ## 2026-07-07 (8) — 랭킹 시스템 구현 + 프로덕션 배포
 
 이전 세션에서 "랭킹은 Redis 없이, 열 때마다 새로 조회하는 방식으로 가능하다"고 설계 합의한 것을

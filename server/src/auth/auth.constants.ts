@@ -18,6 +18,10 @@ export function refreshCookieOptions(): CookieOptions {
     // GET에만 실림) /auth/refresh가 항상 401이 나 로그인 세션 복원이 불가능해진다. 로컬 개발은
     // 프론트/백엔드가 다른 포트일 뿐 같은 origin("localhost")이라 Lax로도 문제없이 동작한다.
     sameSite: isProduction ? 'none' : 'lax',
+    // Firefox(그리고 곧 다른 브라우저도)는 CHIPS(Cookies Having Independent Partitioned State)
+    // 정책에 따라 Partitioned 속성 없는 cross-site(SameSite=None) 쿠키를 거부/경고한다. 이 쿠키는
+    // 항상 우리 프론트 origin 하나에서만 호출되므로 파티셔닝해도 동작에는 영향 없다.
+    partitioned: isProduction,
     path: '/auth',
     maxAge: REFRESH_COOKIE_MAX_AGE_MS,
   };

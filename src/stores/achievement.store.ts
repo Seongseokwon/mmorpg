@@ -82,7 +82,15 @@ export const useAchievementStore = defineStore('achievement', () => {
   }
 
   function collectProgress(): Record<string, AchievementProgress> {
-    return { ...progress.value }
+    // 얕은 스프레드({ ...progress.value })만 하면 Record는 새로 만들어져도 그 안의 각
+    // { claimed } 객체는 여전히 Vue reactive Proxy 참조 그대로 남는다 — IndexedDB에 저장할 때
+    // "Proxy object could not be cloned" 에러로 저장이 실패하는 원인이었다. 각 항목도 새로
+    // 스프레드해서 완전히 순수한 객체로 만든다.
+    const result: Record<string, AchievementProgress> = {}
+    for (const [id, entry] of Object.entries(progress.value)) {
+      result[id] = { ...entry }
+    }
+    return result
   }
 
   return {

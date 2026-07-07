@@ -89,7 +89,10 @@ GET  /ranking        (인증 불필요)                    → 200 [{ rank, nick
 - **리프레시 토큰**은 `httpOnly`+`Secure`(프로덕션만) 쿠키로만 오간다. `sameSite`는 로컬
   개발에서는 `Lax`, 프로덕션(프론트=Vercel/백엔드=Render처럼 서로 다른 도메인)에서는 `None`으로
   분기한다(`auth.constants.ts`의 `refreshCookieOptions()`) — 자세한 이유는 아래 "배포(Render)"절
-  참고. `path`를 `/auth`로 좁혀뒀다 — `/save`, `/ranking` 같은 다른 요청에는 안 실린다. 만료는
+  참고. 프로덕션에서는 `partitioned: true`도 함께 준다 — Firefox(CHIPS 정책)가 `Partitioned`
+  속성 없는 cross-site(`SameSite=None`) 쿠키를 콘솔에 경고하고 조만간 거부하기 시작하는데, 이
+  쿠키는 항상 우리 프론트 origin 하나에서만 쓰이므로 파티셔닝해도 동작에는 영향이 없다. `path`를
+  `/auth`로 좁혀뒀다 — `/save`, `/ranking` 같은 다른 요청에는 안 실린다. 만료는
   30일(`.env`의 `JWT_REFRESH_EXPIRES_IN`), 서명+만료만 검증하는 스테이트리스 방식이라 **서버가
   리프레시 토큰 자체를 강제로 무효화할 방법은 아직 없다** (다른 기기 강제 로그아웃 등은 후속 과제).
 - **`GET /ranking`은 인증 가드가 없다** — 게스트도 로그인 없이 다른 유저 랭킹을 구경할 수 있어야

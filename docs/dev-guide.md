@@ -120,6 +120,17 @@ src/
   최신 버전(v5) 포맷으로 변환한다. 세이브 스키마에 필드를 추가/변경할 때는 버전을 올리고
   마이그레이션 분기를 추가해야, 이미 게임을 하던 유저의 저장 데이터가 깨지지 않는다.
   `tests/e2e/save/migration.spec.ts`에서 이 로직을 검증한다.
+- **`collectSaveData()`에서 `Record<string, 객체>` 형태를 다룰 때는 얕은 스프레드로 충분하지
+  않다.** `{ ...record.value }`는 바깥 객체만 새로 만들 뿐, 각 값이 객체라면 그 값은 여전히 Vue
+  reactive Proxy 참조 그대로 남는다. IndexedDB(구조화 복제 알고리즘)는 Proxy를 직렬화하지
+  못해서 `DataCloneError: Proxy object could not be cloned`로 저장 자체가 조용히 실패한다(예외가
+  게임을 멈추진 않지만 `isSaveAvailable`이 계속 `false`가 되어 "저장 불가" 배너가 뜨고 그 뒤로
+  아무것도 저장 안 됨). 실제로 `achievement.store.ts`의 `collectProgress()`가 이 버그였다 — 업적을
+  하나라도 수령하면(`progress.value[id] = { claimed: true }`) 그 순간부터 저장이 영구히 실패했다.
+  프로덕션에서 Firefox 콘솔의 정확한 에러 메시지를 받고서야 원인을 특정했다(초기 재현 시도는
+  깨끗한 계정/브라우저로는 재현이 안 됐음 — 업적을 실제로 수령해야만 트리거됨). 값 하나하나도
+  `{ ...entry }`로 다시 스프레드해야 완전히 순수한 객체가 된다. 회귀 테스트:
+  `tests/e2e/regression/achievement-claim-save-clone-error.spec.ts`.
 
 ---
 
