@@ -16,7 +16,8 @@
     "idb": "^8.0.3",
     "pinia": "^3.0.3",
     "pixi.js": "^8.9.2",
-    "vue": "^3.5.17"
+    "vue": "^3.5.17",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

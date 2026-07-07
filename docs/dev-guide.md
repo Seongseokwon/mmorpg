@@ -62,18 +62,19 @@
 
 ```
 src/
-  api/            (아직 비어있음 — Phase 4 백엔드 연동 시 사용)
+  api/            백엔드(server/) REST 클라이언트 (http.ts, auth.ts, save.ts) — Phase 4 프론트 연동
   components/     Vue 컴포넌트. 기능별 하위 폴더 (hunt/, equipment/, inventory/, skill/, gacha/, reward/, stage/, stats/, modal/, battle/)
   composables/    Vue 3 컴포지션 함수. use* 접두사. store 여러 개를 조합하는 "접착제" 역할
   data/           게임 밸런스/텍스트 상수 (gameData.ts, rewardData.ts, statData.ts) — "매직넘버 금지" 규칙의 실체
   engine/         (아직 비어있음)
   game/           PixiJS 렌더러 (GameRenderer.ts, assets.ts, layoutConstants.ts). Vue/Pinia를 몰라야 한다
+  router/         Vue Router 라우트 정의 (index.ts) — landing/login/register/game 4개 라우트
   services/       순수 계산 함수 (damageCalc, equipmentService, gameLoop, rewardService, saveService, statCalc)
-  stores/         Pinia 스토어 = 게임 상태 (achievement, battle, currency, equipment, gacha, inventory, meta, player, reward, save, skill, stage, substats)
+  stores/         Pinia 스토어 = 게임 상태 (achievement, auth, battle, currency, equipment, gacha, inventory, meta, player, reward, save, skill, stage, substats)
   systems/        (아직 비어있음)
   types/          공용 TypeScript 타입 (game.ts)
   utils/          (아직 비어있음)
-  views/          라우트 단위 화면. 지금은 GameView.vue 하나뿐 (Vue Router 미설치, TODO.md 기술부채 #5)
+  views/          라우트 단위 화면 — LandingView(/), LoginView(/login), RegisterView(/register), GameView(/game)
 ```
 
 폴더가 비어있어도 지우지 않는 이유는 CLAUDE.md가 정의한 목표 구조라서다 — 정말 안 쓸 것 같으면
@@ -81,9 +82,10 @@ src/
 
 ### 핵심 파일 지도 (처음 볼 때 이 순서로 읽으면 이해가 빠름)
 
-1. `src/main.ts` → `src/App.vue` → `src/views/GameView.vue` : 앱 진입점. `GameView.vue`가
-   `useGameSession()`을 호출하는 곳이자, 하단 네비게이션(`HuntNavBar`)이 어떤 `NavId`를 눌렀을 때
-   어떤 패널을 시트(`GameSheet`)에 띄우는지 여기서 결정한다.
+1. `src/main.ts` → `src/App.vue`(`<RouterView />`) → `src/router/index.ts` : 앱 진입점.
+   `/`(LandingView) → 게스트/로그인/회원가입 선택 → `/game`(GameView)으로 이동한다.
+   `GameView.vue`가 `useGameSession()`을 호출하는 곳이자, 하단 네비게이션(`HuntNavBar`)이 어떤
+   `NavId`를 눌렀을 때 어떤 패널을 시트(`GameSheet`)에 띄우는지 여기서 결정한다.
 2. `src/composables/useGameSession.ts` : 게임의 "부팅 시퀀스"다. 세이브 로드 → 전투 시작 →
    게임 루프 시작 → 자동저장 watch 등록, 이 순서를 여기서 확인할 수 있다.
 3. `src/services/gameLoop.ts` : `setInterval(100ms)`로 매 틱마다 `battle.store.ts`의 `tick()`을
@@ -188,9 +190,13 @@ npm run test:e2e:ui      # Playwright UI 모드로 디버깅
 npx playwright test tests/e2e/save   # 특정 폴더만
 ```
 
-- `tests/e2e/` 아래 폴더는 기능별로 나뉜다: `combat/`, `growth/`, `offline/`, `reward/`, `save/`,
-  `mobile/`, `performance/`, 그리고 **`regression/`** — 한 번 실제로 발생했던 버그를 다시 안 나게
+- `tests/e2e/` 아래 폴더는 기능별로 나뉜다: `auth/`, `combat/`, `growth/`, `offline/`, `reward/`,
+  `save/`, `mobile/`, `performance/`, 그리고 **`regression/`** — 한 번 실제로 발생했던 버그를 다시 안 나게
   막는 전용 폴더. 버그를 고치면 여기에 재현 테스트를 추가하는 게 이 프로젝트의 관례다.
+  - `auth/landing.spec.ts`는 백엔드(NestJS) 없이도 통과하도록 의도적으로 설계했다 —
+    `playwright.config.ts`의 `webServer`가 프론트만 띄우기 때문에, 라우팅/폼 검증/에러 표시처럼
+    백엔드 유무와 무관하게 결정적인 동작만 검증한다. 실제 로그인/회원가입 "성공" 응답 계약은
+    `server/test/*.e2e-spec.ts`(Jest+Supertest, 실제 Postgres 필요)가 별도로 검증한다.
 - **결정론적으로 상태를 만드는 법**: 가챠 확률이나 자동전투 타이밍에 기대지 말고,
   `tests/helpers/db.ts`의 `seedSaveAndReload(page, buildSaveData({...}))`로 IndexedDB에 원하는
   상태를 직접 심고 새로고침한다. `tests/fixtures/save-data.ts`의 `buildSaveData()`/`buildEquipment()`가
@@ -252,3 +258,43 @@ npm run test:e2e:report   # 마지막 실행 리포트 열기
 
 기능을 완성했다고 판단하기 전에 최소한 `npm run build`(타입 에러 확인)와 관련 폴더의
 `npx playwright test tests/e2e/<폴더>`는 통과시킨다.
+
+---
+
+## 11. 인증 · 라우팅 · 클라우드 저장 (Phase 4 프론트 연동)
+
+백엔드(`server/`, [backend-guide.md](backend-guide.md) 참고)의 인증 + 클라우드 세이브 API가
+이제 프론트와 실제로 연결되어 있다. 핵심 흐름:
+
+- **라우팅**(`src/router/index.ts`): `/`(LandingView) · `/login`(LoginView) ·
+  `/register`(RegisterView) · `/game`(GameView) 4개 라우트. 최초 진입은 항상 랜딩이고, 게스트로
+  시작하거나 로그인/회원가입에 성공하면 `/game`으로 이동한다. **주의**: 배포 시(Vercel) SPA
+  히스토리 라우팅이라 `vercel.json`의 rewrite(`/(.*) → /index.html`) 없이는 `/game`을 새로고침하면
+  404가 난다.
+- **게스트 우선 설계**: 로그인은 선택 사항이다. 게스트로 시작하면 지금까지처럼 IndexedDB에만
+  저장되고, 로그인하면 클라우드(`GET/PUT /save`)에도 동기화된다. `HuntTopBar`의 우측 상단 계정
+  버튼(🔑/👤)으로 게임 화면 안에서도 로그인/로그아웃할 수 있다.
+- **`src/stores/auth.store.ts`**: `accessToken`은 XSS 노출을 피하려고 메모리(Pinia)에만 두고
+  `localStorage`에 저장하지 않는다 — 새로고침하면 사라지므로 `restoreSession()`이 `refreshToken`
+  httpOnly 쿠키로 조용히 재발급받는다.
+  - **세션 힌트(`localStorage['mmorpg:hasSession']`)**: 로그인한 적 없는 게스트는
+    `restoreSession()`이 아예 `/auth/refresh`를 호출하지 않는다. 힌트 없이 호출하면 게스트마다
+    매번 401이 나서 콘솔에 에러로 찍히고(`tests/e2e/performance/long-session.spec.ts`가 이걸
+    회귀로 잡아낸다) 불필요한 네트워크 왕복이 생긴다. 로그인/회원가입 성공 시 힌트를 세우고,
+    로그아웃하거나 리프레시가 실제로 무효(401)로 거부되면 지운다. 네트워크 자체가 끊긴 경우는
+    힌트를 유지해 백엔드가 돌아왔을 때 다시 시도한다.
+  - `restoreSession()`은 진행 중인 Promise를 캐시해서 공유한다 — LandingView와
+    `save.store.ts`의 `load()` 양쪽에서 호출해도 중복 요청이 안 생긴다.
+  - `withAuthRetry(fn)`: accessToken이 만료(401)되면 `/auth/refresh`로 한 번 재발급받고 원래
+    요청을 재시도하는 공통 래퍼. `save.store.ts`의 클라우드 조회/저장이 이걸 통해서만 API를 호출한다.
+- **클라우드 저장 동기화 규칙**(`save.store.ts`의 `load()`/`syncToCloud()`):
+  1. 로그인 상태로 `load()`가 호출되면 `GET /save`로 클라우드 세이브를 조회한다.
+  2. 클라우드에 이미 세이브가 있으면(재로그인) **클라우드가 이 기기의 상태를 덮어쓴다** — 다른
+     기기에서 진행한 게 최신이라고 가정한다. 충돌 병합은 하지 않는다(의도적 범위 밖, 아래 참고).
+  3. 클라우드가 비어있으면(첫 로그인) 게스트로 쌓아둔 로컬 진행 상황을 그대로 클라우드에 올려
+     계정에 연결한다.
+  4. 이후 `scheduleSave()`/`saveNow()`가 호출될 때마다(디바운스 저장/즉시 저장 모두) IndexedDB
+     쓰기와 함께 클라우드 PUT도 같이 나간다(`syncToCloud()`, 실패해도 로컬 저장은 유지).
+- **의도적으로 안 한 것**(백엔드 가이드의 "다음 단계"와 동일): 여러 기기에서 각각 오프라인으로
+  진행했을 때의 충돌 병합, 강제 로그아웃(리프레시 토큰 폐기), 비밀번호 재설정, 랭킹. 지금은
+  "마지막에 로그인한 기기가 이긴다" 단순 규칙만 있다.

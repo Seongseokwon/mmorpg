@@ -77,7 +77,7 @@
 | 2 | 사운드 전무 | CLAUDE.md 스택엔 Howler.js가 있지만 `package.json`엔 미설치. 타격음/레벨업/가챠/강화 성공-실패 SFX, BGM 전혀 없음 |
 | 3 | 빌드 청크 경고 | `vite build` 시 500KB+ 단일 청크 경고 — pixi.js 관련 코드 스플리팅 검토 필요 |
 | ~~4~~ | ~~몬스터 HP 미니바~~ | **2026-07-07 완료** — `MonsterHpBars.vue` 추가로 몬스터 각각의 머리 위에 개별 HP 바 표시. 화면 중앙에 떠 있던 단일 "타겟 몬스터" 이름/HP 패널(`HuntMonsterBar.vue`)은 개별 바와 중복돼 제거 |
-| 5 | Vue Router 미설치 | 현재 단일 뷰(GameView)라 당장은 불필요하지만, 스택 문서와 실제 코드가 다름 — 추후 랭킹/로그인 화면 생기면 필요 |
+| ~~5~~ | ~~Vue Router 미설치~~ | **2026-07-07 완료** — 랜딩/로그인/회원가입 화면 도입하며 `vue-router` 설치. `/`(랜딩) · `/login` · `/register` · `/game` 4개 라우트 |
 | 6 | `save.store.ts:21`의 `saveTimer`가 모듈 전역 변수 | CLAUDE.md 자체 규칙("Global mutable state 금지") 위반 |
 | ~~7~~ | ~~탭 종료/새로고침 시 최근 최대 1초 상태 유실 가능~~ | **2026-07-07 완료** — 장비 장착 직후 탭을 닫으면 착용이 풀리는 버그로 실제 발현됨. `useGameSession.ts`에 `visibilitychange`(숨김)/`pagehide` 핸들러로 `saveNow()`를 강제 호출하고, 장착 장비 변경은 디바운스 없이 즉시 저장하도록 수정. 회귀 테스트: `tests/e2e/regression/equip-lost-on-early-close.spec.ts` |
 | 8 | 다중 몬스터(최대 4) + 스킬 광역 도입 이후 스테이지 속도 재검토 | 몬스터 HP/EXP 곡선이 1:1 전투 기준으로 설계되어 밸런스 재검토 필요 |
@@ -104,9 +104,21 @@
   스펙은 [docs/backend-guide.md](docs/backend-guide.md) 참고.
   **이번 범위에 없는 것** (후속 과제): 프론트 로그인 화면·API 연동, IndexedDB↔서버 동기화,
   리프레시 토큰 강제 폐기, 비밀번호 재설정, 랭킹, 배포.
-- [ ] 프론트 연동: 로그인/회원가입 화면, `src/api/` 클라이언트, IndexedDB ↔ 서버 세이브 동기화
+- [x] **프론트 연동 — 2026-07-07 완료**. 랜딩 화면(`/`) + 로그인/회원가입 화면(`/login`,
+  `/register`) + 게임 화면(`/game`) 4개 라우트(`vue-router` 신규 설치), `src/api/`
+  클라이언트(http/auth/save), `src/stores/auth.store.ts`(accessToken은 메모리에만 보관, refreshToken
+  쿠키로 세션 조용히 복원), `save.store.ts`에 클라우드 동기화 연결(재로그인 시 클라우드 우선,
+  첫 로그인 시 게스트 진행분을 클라우드로 업로드). 게스트 플레이는 그대로 유지(로그인 필수 아님),
+  `HuntTopBar`에 계정 버튼(🔑/👤) 추가. 상세 설계는 [docs/dev-guide.md 11절](docs/dev-guide.md)과
+  [docs/backend-guide.md](docs/backend-guide.md) 참고. 실제 로컬 백엔드(docker+Postgres)를 띄워
+  회원가입→자동로그인→클라우드 동기화→새로고침 후 세션 유지까지 브라우저로 직접 검증함.
+  E2E: `tests/e2e/auth/landing.spec.ts`(백엔드 없이도 통과하는 라우팅/폼검증 스펙), 기존 게임
+  스펙들은 `/`가 랜딩으로 바뀌어 `page.goto('/game')`으로 이동.
+  **여전히 범위 밖**: 여러 기기 오프라인 진행분의 충돌 병합(지금은 "마지막 로그인 기기가
+  이긴다"), 리프레시 토큰 강제 폐기, 비밀번호 재설정, 랭킹, 배포.
+- [ ] IndexedDB ↔ 서버 세이브의 진짜 충돌 병합 (지금은 "재로그인 시 클라우드가 이 기기를 덮어쓴다"는 단순 규칙만 있음)
 - [ ] 랭킹 시스템
-- [ ] 배포 환경/호스팅 결정
+- [ ] 배포 환경/호스팅 결정 (`vercel.json` SPA rewrite는 추가했지만 백엔드 배포처는 미정)
 
 로컬 저장 스키마(`SaveData`, 버전 마이그레이션)는 이미 잘 분리되어 있어 백엔드 붙일 때 그대로 전송 포맷으로 쓰기 좋은 상태.
 

@@ -33,7 +33,7 @@ test.describe('업적', () => {
   })
 
   test('업적 탭에 보상 미리보기가 표시된다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
     await page.getByTestId('nav-achievement').click()
 
     await expect(page.getByText('100 루나')).toBeVisible()

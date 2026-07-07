@@ -4,7 +4,7 @@ import { buildSaveData } from '../../fixtures/save-data'
 
 test.describe('스킬', () => {
   test('스킬 패널에 기본 스킬(파워 스트라이크)이 활성 상태로 보인다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
     await page.getByTestId('nav-skill').click()
 
     const sheet = page.getByTestId('game-sheet')

@@ -15,7 +15,7 @@ async function readStatSum(page: import('@playwright/test').Page): Promise<numbe
 test.describe('선천 능력치', () => {
   test('새 캐릭터는 선천 능력치 10포인트를 무작위로 자동 배분받는다', async ({ page }) => {
     // 시딩 없이 완전히 새로운(저장 없는) 상태로 진입 — createDefaultSaveData()가 굴린 값을 그대로 확인한다.
-    await page.goto('/')
+    await page.goto('/game')
     await page.waitForLoadState('domcontentloaded')
 
     await page.getByTestId('nav-character').click()

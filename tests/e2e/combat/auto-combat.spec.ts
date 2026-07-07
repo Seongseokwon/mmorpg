@@ -8,7 +8,7 @@ import { parseFormattedNumber } from '../../helpers/format'
 
 test.describe('자동전투', () => {
   test('유저가 게임에 접속하면 자동전투가 기본으로 켜져 있고 골드가 저절로 늘어난다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     const autoToggle = page.getByTestId('auto-battle-toggle')
     await expect(autoToggle).toBeVisible()
@@ -27,7 +27,7 @@ test.describe('자동전투', () => {
   })
 
   test('AUTO를 끄면 전투가 멈추고, 다시 켜면 재개된다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     const autoToggle = page.getByTestId('auto-battle-toggle')
     const goldText = page.getByTestId('currency-gold')

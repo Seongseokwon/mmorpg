@@ -11,11 +11,13 @@ import { useGachaStore } from './gacha.store'
 import { useAchievementStore } from './achievement.store'
 import { useRewardStore } from './reward.store'
 import { useMetaStore } from './meta.store'
+import { useAuthStore } from './auth.store'
 import {
   createDefaultSaveData,
   loadSaveData,
   saveSaveData,
 } from '@/services/saveService'
+import { fetchCloudSave, pushCloudSave } from '@/api/save'
 import type { SaveData } from '@/types/game'
 
 let saveTimer: number | null = null
@@ -26,6 +28,17 @@ export const useSaveStore = defineStore('save', () => {
   // 쿼터 초과 등에서도 게임은 계속 플레이 가능해야 하므로 예외를 던지지 않고 상태로 노출한다.
   const isSaveAvailable = ref(true)
 
+  /** 로그인 상태면 서버 세이브를 클라우드 저장소에도 반영한다(실패해도 로컬 플레이는 계속). */
+  async function syncToCloud(data: SaveData): Promise<void> {
+    const auth = useAuthStore()
+    if (!auth.isLoggedIn) return
+    try {
+      await auth.withAuthRetry((token) => pushCloudSave(token, data))
+    } catch (error) {
+      console.error('[save] 클라우드 저장 실패 — 로컬 저장은 유지됩니다.', error)
+    }
+  }
+
   async function load(): Promise<void> {
     let data: SaveData | null = null
     try {
@@ -35,11 +48,41 @@ export const useSaveStore = defineStore('save', () => {
       isSaveAvailable.value = false
     }
 
-    applySaveData(data ?? createDefaultSaveData())
+    const auth = useAuthStore()
+    await auth.restoreSession()
+
+    if (auth.isLoggedIn) {
+      try {
+        const cloud = await auth.withAuthRetry((token) => fetchCloudSave(token))
+        if (cloud) {
+          // 이 계정으로 이미 클라우드에 저장한 적 있음 — 클라우드를 기준으로 이 기기 상태를 맞춘다.
+          data = cloud.data
+        } else if (data) {
+          // 첫 로그인 — 게스트로 쌓아둔 로컬 진행 상황을 그대로 클라우드에 올려 계정에 연결한다.
+          void syncToCloud(data)
+        }
+      } catch (error) {
+        console.error('[save] 클라우드 세이브 조회 실패 — 로컬 저장으로 진행합니다.', error)
+      }
+    }
+
+    const finalData = data ?? createDefaultSaveData()
+    applySaveData(finalData)
     isLoaded.value = true
 
+    if (auth.isLoggedIn) {
+      // 클라우드 데이터로 화면을 그렸다면 이 기기의 로컬 캐시(IndexedDB)도 같은 상태로 맞춰둔다.
+      try {
+        await saveSaveData(finalData)
+        isSaveAvailable.value = true
+      } catch (error) {
+        console.error('[save] IndexedDB 저장 실패', error)
+        isSaveAvailable.value = false
+      }
+    }
+
     const reward = useRewardStore()
-    reward.setLastActiveAt(data?.lastActiveAt ?? Date.now())
+    reward.setLastActiveAt(finalData.lastActiveAt ?? Date.now())
     reward.checkOfflineReward()
   }
 
@@ -122,7 +165,8 @@ export const useSaveStore = defineStore('save', () => {
       window.clearTimeout(saveTimer)
     }
     saveTimer = window.setTimeout(() => {
-      saveSaveData(collectSaveData()).then(
+      const data = collectSaveData()
+      saveSaveData(data).then(
         () => {
           isSaveAvailable.value = true
         },
@@ -131,17 +175,20 @@ export const useSaveStore = defineStore('save', () => {
           isSaveAvailable.value = false
         },
       )
+      void syncToCloud(data)
     }, 1000)
   }
 
   async function saveNow(): Promise<void> {
+    const data = collectSaveData()
     try {
-      await saveSaveData(collectSaveData())
+      await saveSaveData(data)
       isSaveAvailable.value = true
     } catch (error) {
       console.error('[save] IndexedDB 저장 실패', error)
       isSaveAvailable.value = false
     }
+    void syncToCloud(data)
   }
 
   return {

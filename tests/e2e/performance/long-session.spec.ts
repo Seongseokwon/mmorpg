@@ -23,7 +23,7 @@ test.describe('장시간 방치 안정성', () => {
     })
     page.on('crash', () => pageErrors.push('page crashed'))
 
-    await page.goto('/')
+    await page.goto('/game')
 
     const goldText = page.getByTestId('currency-gold')
     const samples: number[] = []

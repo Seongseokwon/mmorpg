@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('몬스터 스폰', () => {
   test('몬스터를 잡으면 사냥터가 비지 않고 새 몬스터가 계속 나타난다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     // 몬스터 개별 HP 미니바 (MonsterHpBars.vue) — 파밍 중에는 최소 1개는 항상 보여야 한다.
     const hpBars = page.locator('[data-testid^="monster-hp-bar-"]')

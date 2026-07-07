@@ -6,7 +6,7 @@ const MIN_TOUCH_TARGET_PX = 40
 
 test.describe('터치 인터랙션', () => {
   test('하단 네비게이션 버튼들이 실수 없이 탭할 수 있는 크기를 갖는다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     for (const id of ['nav-character', 'nav-equipment', 'nav-skill', 'nav-reward', 'nav-achievement', 'nav-stage']) {
       const box = await page.getByTestId(id).boundingBox()
@@ -16,7 +16,7 @@ test.describe('터치 인터랙션', () => {
   })
 
   test('AUTO 토글을 탭하면 즉시 상태가 바뀐다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     const toggle = page.getByTestId('auto-battle-toggle')
     await expect(toggle).toContainText('AUTO')
@@ -29,7 +29,7 @@ test.describe('터치 인터랙션', () => {
   })
 
   test('스탯 화면 버튼도 탭으로 정상 동작한다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
     // 자동전투로 레벨업이 일어나 statPoints가 변하기 전에 고정해둔다
     await page.getByTestId('auto-battle-toggle').tap()
     await page.getByTestId('nav-character').tap()

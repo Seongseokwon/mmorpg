@@ -12,7 +12,7 @@ const SAVE_KEY = 'main'
  * 원하는 게임 상태를 결정적으로 재현하기 위한 시딩 방법.
  */
 export async function seedSaveAndReload(page: Page, data: FixtureSaveData): Promise<void> {
-  await page.goto('/')
+  await page.goto('/game')
   await page.waitForLoadState('domcontentloaded')
 
   await page.evaluate(
@@ -50,7 +50,7 @@ export async function seedSaveAndReload(page: Page, data: FixtureSaveData): Prom
  * saveService.ts의 migrateSaveData()가 실제로 그 포맷을 v4로 변환하는지 검증하기 위한 용도.
  */
 export async function seedRawAndReload(page: Page, raw: Record<string, unknown>): Promise<void> {
-  await page.goto('/')
+  await page.goto('/game')
   await page.waitForLoadState('domcontentloaded')
 
   await page.evaluate(

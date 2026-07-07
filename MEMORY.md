@@ -5,6 +5,49 @@
 
 ---
 
+## 2026-07-07 (5) — 랜딩/로그인/회원가입 화면 + 백엔드 실연동 (Phase 4 프론트)
+
+기존엔 `App.vue`가 `GameView`를 라우팅 없이 바로 그렸다(TODO.md 기술부채 #5: Vue Router 미설치).
+요청은 "최초 진입 시 랜딩 화면 + 로그인/회원가입 화면을 만들고, 완성되면 백엔드와 연동"이라 셋을
+한 세션에서 순서대로 처리했다.
+
+**설계 결정 — 로그인은 선택 사항으로 둠**: 기존 게임은 계정 없이 바로 플레이 가능했고(IndexedDB
+로컬 저장), 이 UX를 강제 로그인으로 막으면 CLAUDE.md의 "짧은 동선/모바일 우선" 원칙과 충돌한다고
+판단. 그래서 랜딩에 "게스트로 시작하기"를 기본 CTA로 두고, 로그인/회원가입은 클라우드 저장(기기 간
+이어하기)이 필요한 유저만 선택하는 부가 기능으로 설계했다. 게임 화면(`HuntTopBar`) 우측에 계정
+버튼(🔑=게스트/👤=로그인됨)을 둬서 플레이 도중에도 로그인으로 전환할 수 있게 했다.
+
+**구현**:
+- `vue-router` 신규 설치, `/`(LandingView) · `/login` · `/register` · `/game`(기존 GameView) 4개
+  라우트. 배포(Vercel) 시 히스토리 라우팅이 새로고침에서 404 안 나게 `vercel.json`에 SPA rewrite 추가.
+- `src/api/{http,auth,save}.ts`: `fetch` 기반 얇은 클라이언트. `ApiError`로 HTTP 상태코드를 들고
+  다니게 해서 401/409/400을 구분한 에러 메시지를 만들 수 있게 함.
+- `src/stores/auth.store.ts`: `accessToken`은 메모리에만 보관(XSS 노출 회피, 백엔드 가이드 권장
+  그대로). **콘솔 노이즈 이슈**: 처음엔 앱 부팅마다 `restoreSession()`(→`/auth/refresh`)을 무조건
+  호출했더니, 로그인한 적 없는 절대다수의 게스트도 매번 401을 만들어 브라우저가 콘솔에 네트워크
+  에러로 찍었고, 이게 `tests/e2e/performance/long-session.spec.ts`(콘솔 에러 0건 기대)를 실패시켰다.
+  `localStorage['mmorpg:hasSession']` 힌트를 추가해 "로그인한 적 있는 사용자만" refresh를
+  시도하도록 고쳐서 해결 — 게스트는 네트워크 요청 자체를 안 보낸다.
+- `save.store.ts`: 로그인 상태면 `load()`가 `GET /save`로 클라우드를 조회해 있으면 그걸로 이 기기를
+  덮어쓰고(재로그인), 없으면(첫 로그인) 게스트 로컬 진행분을 클라우드로 올린다. 이후
+  `scheduleSave()`/`saveNow()` 호출마다 IndexedDB 쓰기 + 클라우드 PUT을 같이 보낸다. **충돌 병합은
+  구현 안 함** — "마지막 로그인/최근 클라우드가 이긴다"는 단순 규칙뿐. 백엔드 가이드에도 애초에
+  이건 다음 단계로 명시돼 있었음.
+- **e2e 테스트 라우팅 변경**: 랜딩이 `/`를 차지하면서, 게임 화면을 직접 테스트하던 기존 스펙 12개
+  파일의 `page.goto('/')`를 `page.goto('/game')`으로 전부 변경(`tests/helpers/db.ts`의
+  `seedSaveAndReload`/`seedRawAndReload` 포함). 신규 `tests/e2e/auth/landing.spec.ts`는 백엔드 없이도
+  결정적으로 통과하도록 라우팅/폼검증/에러표시만 검증(실제 로그인 성공 응답은 `server/test/*.e2e-spec.ts`
+  영역).
+- **실제 연동 검증**: `docker compose up -d` + `npx prisma migrate deploy` + `npm run start:dev`로
+  로컬 백엔드를 띄우고, Playwright로 회원가입→자동로그인→(자동전투로 상태 변화)→클라우드 동기화→
+  새로고침 후에도 세션(계정 버튼이 이메일 표시) 유지되는지 브라우저로 직접 확인. 이후 임시 스펙은 삭제.
+
+`npx vue-tsc -b` 통과, `npx playwright test`(desktop 44 + mobile 5, 총 49개) 전체 통과 확인.
+`save/migration.spec.ts`의 산발적 실패 1건은 재실행 시 통과 — 병렬 워커 CPU 경합에 의한 기존 플레이키(이
+세션 변경과 무관, playwright.config.ts 주석에도 이미 언급된 known issue).
+
+---
+
 ## 2026-07-06 (4) — 강화 +15 캡 UI 미반영 수정 + 최대 강화 레벨 +20으로 상향
 
 `equipmentService.ts`의 `MAX_ENHANCE_LEVEL`을 15 → 20으로 상향(요청: "최대강화도 +20까지 될 수 있도록").

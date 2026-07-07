@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('모바일 UI', () => {
   test('모바일 화면에서 하단 네비게이션과 스킬바가 보이고, 탭하면 시트가 열리고 닫힌다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
 
     await expect(page.getByTestId('nav-character')).toBeVisible()
     await expect(page.getByTestId('auto-battle-toggle')).toBeVisible()
@@ -16,7 +16,7 @@ test.describe('모바일 UI', () => {
   })
 
   test('모바일 뷰포트에서 가로 스크롤(overflow)이 발생하지 않는다', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/game')
     await page.waitForTimeout(500) // 캔버스/레이아웃이 안정화될 시간
 
     const { scrollWidth, clientWidth } = await page.evaluate(() => ({

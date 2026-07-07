@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player.store'
 import { useCurrencyStore } from '@/stores/currency.store'
 import { useStageStore } from '@/stores/stage.store'
 import { useBattleStore } from '@/stores/battle.store'
 import { useEquipmentStore } from '@/stores/equipment.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const player = usePlayerStore()
 const currency = useCurrencyStore()
 const stage = useStageStore()
 const battle = useBattleStore()
 const equipment = useEquipmentStore()
+const auth = useAuthStore()
+const router = useRouter()
 
 const stageProgress = computed(() => {
   if (battle.stagePhase === 'boss') return '보스전'
@@ -21,6 +25,22 @@ const stageProgress = computed(() => {
 const combatPower = computed(
   () => player.attack + equipment.totalAttackBonus + equipment.totalHpBonus,
 )
+
+const accountLabel = computed(() => (auth.isLoggedIn ? '👤' : '🔑'))
+const accountTitle = computed(() =>
+  auth.isLoggedIn ? `${auth.user?.email} · 눌러서 로그아웃` : '눌러서 로그인 (클라우드 저장)',
+)
+
+async function handleAccountClick(): Promise<void> {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (window.confirm('로그아웃 하시겠습니까?')) {
+    await auth.logout()
+    router.push('/')
+  }
+}
 </script>
 
 <template>
@@ -42,6 +62,16 @@ const combatPower = computed(
       <span class="top-bar__currency-icon">🌙</span>
       <span class="top-bar__currency-value overlay-text" data-testid="currency-gold">{{ currency.formattedGold }}</span>
     </div>
+
+    <button
+      class="top-bar__account"
+      type="button"
+      :title="accountTitle"
+      data-testid="account-button"
+      @click="handleAccountClick"
+    >
+      {{ accountLabel }}
+    </button>
   </header>
 </template>
 
@@ -152,5 +182,22 @@ const combatPower = computed(
   font-weight: 700;
   color: #f5c542;
   white-space: nowrap;
+}
+
+.top-bar__account {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.9rem;
+}
+
+.top-bar__account:active {
+  transform: scale(0.94);
 }
 </style>
