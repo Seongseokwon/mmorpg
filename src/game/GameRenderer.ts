@@ -7,6 +7,7 @@ import {
   getMonsterWalkSpriteUrl,
 } from '@/game/assets'
 import type { BattleEvent, DamageEvent, Monster } from '@/types/game'
+import { GROUND_Y_RATIO, MONSTER_HEIGHT_RATIO } from '@/game/layoutConstants'
 
 interface DamageTextObject {
   text: Text
@@ -31,7 +32,6 @@ const MONSTER_SPRITE_SIZE = 64
 // 스프라이트 높이를 스테이지 박스 높이의 이 비율만큼만 차지하도록 제한한다.
 // 16:9 박스는 세로 공간이 좁으므로, 고정 배율(px) 대신 비율 기반으로 계산해야 캐릭터가 화면을 뚫고 나가지 않는다.
 const PLAYER_HEIGHT_RATIO = 0.48
-const MONSTER_HEIGHT_RATIO = 0.34
 
 // 몬스터 걷기 프레임 전환 주기(ms). battle.store의 tick 주기와 무관하게 실제 시간 기준으로 토글한다.
 const WALK_FRAME_INTERVAL_MS = 260
@@ -163,7 +163,7 @@ export class GameRenderer {
 
     const width = this.app.screen.width
     const height = this.app.screen.height
-    const groundY = height * 0.82
+    const groundY = height * GROUND_Y_RATIO
 
     // 고정 px 배율 대신 "스테이지 박스 높이 대비 비율"로 스케일을 역산한다.
     // 16:9 박스는 세로 폭이 좁아서, 화면 너비 기준 배율을 쓰면 캐릭터 키가 박스 높이를 넘어 위아래로 잘려나간다.
@@ -196,7 +196,7 @@ export class GameRenderer {
     if (!this.app) return
 
     const width = this.app.screen.width
-    const groundY = this.app.screen.height * 0.82
+    const groundY = this.app.screen.height * GROUND_Y_RATIO
     const aliveIds = new Set(monsters.map((m) => m.id))
 
     // 사라진(사망) 몬스터가 쓰던 슬롯을 반납
