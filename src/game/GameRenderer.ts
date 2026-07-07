@@ -395,6 +395,17 @@ export class GameRenderer {
 
   destroy(): void {
     window.removeEventListener('resize', this.handleResize)
+
+    // applyIdleBob()이 건 repeat: -1 트윈은 무한 반복이라, app.destroy()로 스프라이트가
+    // 파괴돼도 gsap 자체가 멈추지 않고 죽은 객체를 계속 참조하며 tick한다. 명시적으로 kill한다.
+    if (this.playerSprite) gsap.killTweensOf(this.playerSprite)
+    for (const slot of this.monsterPool) {
+      gsap.killTweensOf(slot.sprite)
+    }
+    for (const item of this.damagePool) {
+      gsap.killTweensOf(item.text)
+    }
+
     this.app?.destroy(true, { children: true })
     this.app = null
     this.root = null
