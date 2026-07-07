@@ -79,7 +79,7 @@
 | ~~4~~ | ~~몬스터 HP 미니바~~ | **2026-07-07 완료** — `MonsterHpBars.vue` 추가로 몬스터 각각의 머리 위에 개별 HP 바 표시. 화면 중앙에 떠 있던 단일 "타겟 몬스터" 이름/HP 패널(`HuntMonsterBar.vue`)은 개별 바와 중복돼 제거 |
 | 5 | Vue Router 미설치 | 현재 단일 뷰(GameView)라 당장은 불필요하지만, 스택 문서와 실제 코드가 다름 — 추후 랭킹/로그인 화면 생기면 필요 |
 | 6 | `save.store.ts:21`의 `saveTimer`가 모듈 전역 변수 | CLAUDE.md 자체 규칙("Global mutable state 금지") 위반 |
-| 7 | 탭 종료/새로고침 시 최근 최대 1초 상태 유실 가능 | `scheduleSave` 1초 디바운스, `beforeunload` 대응 없음 |
+| ~~7~~ | ~~탭 종료/새로고침 시 최근 최대 1초 상태 유실 가능~~ | **2026-07-07 완료** — 장비 장착 직후 탭을 닫으면 착용이 풀리는 버그로 실제 발현됨. `useGameSession.ts`에 `visibilitychange`(숨김)/`pagehide` 핸들러로 `saveNow()`를 강제 호출하고, 장착 장비 변경은 디바운스 없이 즉시 저장하도록 수정. 회귀 테스트: `tests/e2e/regression/equip-lost-on-early-close.spec.ts` |
 | 8 | 다중 몬스터(최대 4) + 스킬 광역 도입 이후 스테이지 속도 재검토 | 몬스터 HP/EXP 곡선이 1:1 전투 기준으로 설계되어 밸런스 재검토 필요 |
 | 9 | 보스 배율(HP x8/공격 x1.5/골드 x10)이 임시값 | `stage.store.ts`의 `BOSS_*_MULTIPLIER` — 플레이테스트로 조정 필요. RFC 5.5 참고 |
 | 10 | 보스 전용 아트 없음 | 기존 스프라이트를 확대+틴트로 대체 중 (MVP). 전용 리소스 확보 시 `GameRenderer.ts`의 `BOSS_TINT`/스케일 로직 대체 |
