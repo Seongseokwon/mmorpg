@@ -18,8 +18,19 @@ export function useGameSession() {
   const gameLoop = new GameLoop(100)
   const battle = useBattleStore()
   const save = useSaveStore()
+  const reward = useRewardStore()
+
+  // 탭이 백그라운드에 있는 동안은 브라우저가 타이머를 억제/중단시킬 수 있어 게임 루프가 멈추거나
+  // 크게 느려진다. 다시 보이게 될 때마다 오프라인 보상을 재계산해 방치 시간을 보상해야 한다.
+  function handleVisibilityChange(): void {
+    if (document.visibilityState === 'visible') {
+      reward.checkOfflineReward()
+    }
+  }
 
   onMounted(async () => {
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     await save.load()
     battle.startBattle()
 
@@ -36,7 +47,6 @@ export function useGameSession() {
     const subStats = useSubStatsStore()
     const gacha = useGachaStore()
     const achievement = useAchievementStore()
-    const reward = useRewardStore()
     const meta = useMetaStore()
 
     watch(
@@ -64,6 +74,7 @@ export function useGameSession() {
   })
 
   onUnmounted(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
     gameLoop.stop()
     void save.saveNow()
   })
