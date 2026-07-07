@@ -87,12 +87,21 @@ export function calculateOfflineReward(
   return { meso, exp, hours, shouldShow: meso > 0 || exp > 0 }
 }
 
+// toISOString()은 UTC 기준이라 KST(UTC+9)에서는 로컬 자정이 아니라 오전 9시에 날짜가 바뀐다.
+// 일일 보상/스트릭 판정은 반드시 유저의 로컬 타임존 자정 기준이어야 한다.
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function getTodayDateString(): string {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalDateString(new Date())
 }
 
 export function isYesterday(dateStr: string): boolean {
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
-  return dateStr === yesterday.toISOString().slice(0, 10)
+  return dateStr === toLocalDateString(yesterday)
 }
