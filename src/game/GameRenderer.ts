@@ -1,5 +1,5 @@
 import gsap from 'gsap'
-import { Application, Assets, Container, Sprite, Text, TextStyle } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js'
 import {
   BACKGROUND_SPRITE,
   CHARACTER_SPRITES,
@@ -12,6 +12,20 @@ import { BOSS_SCALE_MULTIPLIER, GROUND_Y_RATIO, MONSTER_HEIGHT_RATIO } from '@/g
 interface DamageTextObject {
   text: Text
   active: boolean
+}
+
+interface ProjectileSlot {
+  graphic: Graphics
+  active: boolean
+}
+
+interface ProjectileVisual {
+  /** fireball: 캐릭터 위치→몬스터로 수평 비행 / meteor: 화면 위→몬스터로 낙하 */
+  kind: 'fireball' | 'meteor'
+  travelMs: number
+  coreColor: number
+  glowColor: number
+  radius: number
 }
 
 interface MonsterPoolSlot {
@@ -56,6 +70,20 @@ const SKILL_DAMAGE_JITTER_PX = 16
 // 다단 히트 스킬의 각 히트를 동시에 띄우지 않고 이 간격(ms)만큼 순차적으로 지연시켜 "연속 타격" 느낌을 준다
 const SKILL_HIT_STAGGER_MS = 35
 
+// 발사체 연출이 등록된 스킬만 비행 궤적을 그린다. 목록에 없으면(예: power_strike, 근접 타격)
+// 기존처럼 지연 시간 이후 즉시 명중 판정으로 처리해 회귀 없이 넘어간다.
+const PROJECTILE_VISUALS: Record<string, ProjectileVisual> = {
+  fire_ball: { kind: 'fireball', travelMs: 260, coreColor: 0xfff2b8, glowColor: 0xff6633, radius: 10 },
+  meteor_storm: { kind: 'meteor', travelMs: 420, coreColor: 0xffd9a8, glowColor: 0xff4422, radius: 13 },
+}
+
+// 자체 이미지 에셋 없이 Graphics(원)만으로 발사체를 그리므로, 동시에 여러 개가 날아가도 감당할 만큼
+// 넉넉히 둔다. meteor_storm 최대 히트 수(12)에 이전 발사체의 착탄 연출이 겹치는 여유분을 더했다.
+const PROJECTILE_POOL_SIZE = 16
+
+// 메테오가 낙하를 시작하는 화면 위쪽 오프셋(px). 화면 밖에서 떨어지기 시작해야 "하늘에서 온다" 느낌이 산다.
+const METEOR_SPAWN_ABOVE_PX = 60
+
 export class GameRenderer {
   private app: Application | null = null
   private root: Container | null = null
@@ -64,6 +92,7 @@ export class GameRenderer {
   private playerSprite: Sprite | null = null
   private monsterPool: MonsterPoolSlot[] = []
   private damagePool: DamageTextObject[] = []
+  private projectilePool: ProjectileSlot[] = []
   private readonly damagePoolSize = DAMAGE_POOL_SIZE
   private playerScale = 1
   private monsterScale = 1
@@ -92,6 +121,7 @@ export class GameRenderer {
     await this.loadAssets()
     this.createScene()
     this.createDamagePool()
+    this.createProjectilePool()
     this.layout()
     window.addEventListener('resize', this.handleResize)
 
@@ -162,6 +192,24 @@ export class GameRenderer {
       this.root.addChild(text)
       this.damagePool.push({ text, active: false })
     }
+  }
+
+  private createProjectilePool(): void {
+    if (!this.root) return
+
+    for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) {
+      const graphic = new Graphics()
+      graphic.visible = false
+      this.root.addChild(graphic)
+      this.projectilePool.push({ graphic, active: false })
+    }
+  }
+
+  /** 발사체 룩(외곽 글로우 + 밝은 코어)을 다시 그린다. 스킬마다 색/크기가 달라 발동 시점에 다시 그린다. */
+  private paintProjectile(graphic: Graphics, visual: ProjectileVisual): void {
+    graphic.clear()
+    graphic.circle(0, 0, visual.radius).fill({ color: visual.glowColor, alpha: 0.35 })
+    graphic.circle(0, 0, visual.radius * 0.55).fill({ color: visual.coreColor, alpha: 0.95 })
   }
 
   private readonly handleResize = (): void => {
@@ -275,6 +323,57 @@ export class GameRenderer {
     }
   }
 
+  /**
+   * skillId가 PROJECTILE_VISUALS에 등록되어 있으면 (fromX,fromY)→(toX,toY)로 날아가는 발사체를 그리고
+   * 도착 시점에 onArrive를 호출한다. 등록되지 않은 스킬(근접 타격)이거나 풀이 가득 찼으면 발사체 없이
+   * 즉시 onArrive를 호출해 데미지 숫자가 누락되지 않게 한다.
+   */
+  private launchProjectile(
+    skillId: string,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    onArrive: () => void,
+  ): void {
+    const visual = PROJECTILE_VISUALS[skillId]
+    const slot = visual ? this.projectilePool.find((p) => !p.active) : undefined
+
+    if (!visual || !slot) {
+      onArrive()
+      return
+    }
+
+    slot.active = true
+    this.paintProjectile(slot.graphic, visual)
+    slot.graphic.alpha = 1
+    slot.graphic.scale.set(1)
+    slot.graphic.visible = true
+    slot.graphic.x = fromX
+    slot.graphic.y = fromY
+
+    gsap.to(slot.graphic, {
+      x: toX,
+      y: toY,
+      duration: visual.travelMs / 1000,
+      ease: visual.kind === 'meteor' ? 'power2.in' : 'power1.in',
+      onComplete: () => {
+        // 별도 폭발 이펙트 풀을 두지 않고, 발사체 자신을 잠깐 부풀렸다 지우는 것으로 착탄을 표현한다
+        gsap.to(slot.graphic, { alpha: 0, duration: 0.12 })
+        gsap.to(slot.graphic.scale, {
+          x: 1.8,
+          y: 1.8,
+          duration: 0.12,
+          onComplete: () => {
+            slot.graphic.visible = false
+            slot.active = false
+          },
+        })
+        onArrive()
+      },
+    })
+  }
+
   handleBattleEvent(event: BattleEvent): void {
     switch (event.type) {
       case 'player_attack': {
@@ -290,16 +389,34 @@ export class GameRenderer {
       }
       case 'skill_use': {
         this.flashSkill(event.skillId)
+        const visual = PROJECTILE_VISUALS[event.skillId]
         event.hits.forEach((hit, index) => {
           const tween = gsap.delayedCall(index * (SKILL_HIT_STAGGER_MS / 1000), () => {
-            const target = this.getMonsterPoolSlot(hit.monsterId)
-            this.showDamage({
-              value: hit.damage,
-              x: target?.container.x ?? 0,
-              y: (target?.container.y ?? 0) - 80,
-              isSkill: true,
-            })
             this.pendingSkillHits = this.pendingSkillHits.filter((t) => t !== tween)
+
+            const target = this.getMonsterPoolSlot(hit.monsterId)
+            const toX = target?.container.x ?? 0
+            const toY = (target?.container.y ?? 0) - 80
+
+            // 발사체가 실제로 도착하는 순간에 데미지 숫자/피격 흔들림을 보여줘야 "맞아서" 터진 느낌이 난다.
+            // monster.hp 자체는 battle.store에서 이미 즉시 반영되어 있어(체력바는 먼저 줄어듦), 여기서는
+            // 순수 연출 타이밍만 늦추는 것이다.
+            const resolveHit = (): void => {
+              this.showDamage({ value: hit.damage, x: toX, y: toY, isSkill: true })
+              this.shakeMonster(hit.monsterId)
+            }
+
+            if (!visual) {
+              resolveHit()
+              return
+            }
+
+            const [fromX, fromY] =
+              visual.kind === 'meteor'
+                ? [toX + (Math.random() - 0.5) * 30, -METEOR_SPAWN_ABOVE_PX]
+                : [this.playerContainer?.x ?? 0, (this.playerContainer?.y ?? 0) - 90]
+
+            this.launchProjectile(event.skillId, fromX, fromY, toX, toY, resolveHit)
           })
           this.pendingSkillHits.push(tween)
         })
@@ -439,6 +556,10 @@ export class GameRenderer {
     for (const item of this.damagePool) {
       gsap.killTweensOf(item.text)
     }
+    for (const slot of this.projectilePool) {
+      gsap.killTweensOf(slot.graphic)
+      gsap.killTweensOf(slot.graphic.scale)
+    }
     for (const tween of this.pendingSkillHits) {
       tween.kill()
     }
@@ -451,6 +572,7 @@ export class GameRenderer {
     this.playerSprite = null
     this.monsterPool = []
     this.damagePool = []
+    this.projectilePool = []
     this.pendingSkillHits = []
     this.mounted = false
   }
