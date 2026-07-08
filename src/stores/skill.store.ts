@@ -10,11 +10,13 @@ export const useSkillStore = defineStore('skill', () => {
   const levels = ref<Record<string, number>>({
     power_strike: 1,
     fire_ball: 0,
+    meteor_storm: 0,
   })
 
   const cooldowns = ref<Record<string, number>>({
     power_strike: 0,
     fire_ball: 0,
+    meteor_storm: 0,
   })
 
   const skills = computed<Skill[]>(() =>
@@ -31,6 +33,8 @@ export const useSkillStore = defineStore('skill', () => {
         Math.max(1, levels.value[def.id] ?? 0),
       ),
       unlockStage: def.unlockStage,
+      hitsPerTarget: def.hitsPerTarget,
+      aoeAll: def.aoeAll,
     })),
   )
 

@@ -185,6 +185,7 @@ export function createDefaultSaveData(): SaveData {
     skills: [
       { id: 'power_strike', level: 1 },
       { id: 'fire_ball', level: 0 },
+      { id: 'meteor_storm', level: 0 },
     ],
     gachaPity: 0,
     achievements: {},

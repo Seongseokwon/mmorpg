@@ -39,6 +39,23 @@ const WALK_FRAME_INTERVAL_MS = 260
 // 보스 전용 아트가 없으므로, 같은 스프라이트를 붉게 물들여 일반 몬스터와 구분한다 (크기 배율은 layoutConstants 참고)
 const BOSS_TINT = 0xff9a9a
 
+// 스킬 발동 시 캐릭터에 입히는 색(tint). skillId별로 다른 색을 줘 어떤 스킬인지 시각적으로 구분한다.
+const SKILL_TINTS: Record<string, number> = {
+  fire_ball: 0xff6633,
+  meteor_storm: 0x8866ff,
+}
+const DEFAULT_SKILL_TINT = 0xffcc00
+
+// 데미지 텍스트 풀 크기. MAX_MONSTERS(4, battle.store.ts) × meteor_storm의 hitsPerTarget(3) = 12가
+// 한 번에 동시 표시될 수 있는 최대치이고, 여기에 애니메이션이 채 끝나지 않은 이전 히트분 여유를 더한다.
+const DAMAGE_POOL_SIZE = 20
+
+// 다단 히트 스킬의 데미지 숫자가 같은 몬스터 위치에 완전히 겹쳐 보이지 않도록 흩뿌리는 랜덤 오프셋 범위(px)
+const SKILL_DAMAGE_JITTER_PX = 16
+
+// 다단 히트 스킬의 각 히트를 동시에 띄우지 않고 이 간격(ms)만큼 순차적으로 지연시켜 "연속 타격" 느낌을 준다
+const SKILL_HIT_STAGGER_MS = 35
+
 export class GameRenderer {
   private app: Application | null = null
   private root: Container | null = null
@@ -47,10 +64,13 @@ export class GameRenderer {
   private playerSprite: Sprite | null = null
   private monsterPool: MonsterPoolSlot[] = []
   private damagePool: DamageTextObject[] = []
-  private readonly damagePoolSize = 12
+  private readonly damagePoolSize = DAMAGE_POOL_SIZE
   private playerScale = 1
   private monsterScale = 1
   private mounted = false
+  // gsap.delayedCall은 특정 객체를 target으로 걸지 않아 destroy()의 killTweensOf(obj) 정리 대상에
+  // 잡히지 않는다. 스태거 연출을 위해 예약한 콜백을 직접 추적해 언마운트 시 확실히 kill한다.
+  private pendingSkillHits: gsap.core.Tween[] = []
 
   async mount(canvas: HTMLCanvasElement): Promise<void> {
     if (this.mounted) return
@@ -270,15 +290,19 @@ export class GameRenderer {
       }
       case 'skill_use': {
         this.flashSkill(event.skillId)
-        for (const hit of event.hits) {
-          const target = this.getMonsterPoolSlot(hit.monsterId)
-          this.showDamage({
-            value: hit.damage,
-            x: target?.container.x ?? 0,
-            y: (target?.container.y ?? 0) - 80,
-            isSkill: true,
+        event.hits.forEach((hit, index) => {
+          const tween = gsap.delayedCall(index * (SKILL_HIT_STAGGER_MS / 1000), () => {
+            const target = this.getMonsterPoolSlot(hit.monsterId)
+            this.showDamage({
+              value: hit.damage,
+              x: target?.container.x ?? 0,
+              y: (target?.container.y ?? 0) - 80,
+              isSkill: true,
+            })
+            this.pendingSkillHits = this.pendingSkillHits.filter((t) => t !== tween)
           })
-        }
+          this.pendingSkillHits.push(tween)
+        })
         break
       }
       case 'monster_hit':
@@ -298,7 +322,7 @@ export class GameRenderer {
   private flashSkill(skillId: string): void {
     if (!this.playerSprite) return
 
-    const tint = skillId === 'fire_ball' ? 0xff6633 : 0xffcc00
+    const tint = SKILL_TINTS[skillId] ?? DEFAULT_SKILL_TINT
     this.playerSprite.tint = tint
     gsap.to(this.playerSprite.scale, {
       x: this.playerScale * 1.2,
@@ -376,17 +400,21 @@ export class GameRenderer {
     const slot = this.damagePool.find((item) => !item.active)
     if (!slot) return
 
+    // 스킬 다단 히트는 같은 몬스터 좌표에 여러 번 꽂히므로, 완전히 겹쳐 안 보이지 않도록 살짝 흩뿌린다
+    const jitterX = event.isSkill ? (Math.random() - 0.5) * SKILL_DAMAGE_JITTER_PX : 0
+    const jitterY = event.isSkill ? (Math.random() - 0.5) * SKILL_DAMAGE_JITTER_PX : 0
+
     slot.active = true
     slot.text.text = String(event.value)
     slot.text.style.fill = event.isCritical ? 0xff4444 : event.isSkill ? 0xff6633 : 0xfff1a8
     slot.text.style.fontSize = event.isCritical ? 30 : event.isSkill ? 28 : 22
-    slot.text.x = event.x
-    slot.text.y = event.y
+    slot.text.x = event.x + jitterX
+    slot.text.y = event.y + jitterY
     slot.text.alpha = 1
     slot.text.visible = true
 
     gsap.to(slot.text, {
-      y: event.y - 50,
+      y: event.y + jitterY - 50,
       alpha: 0,
       duration: 0.7,
       ease: 'power2.out',
@@ -411,6 +439,9 @@ export class GameRenderer {
     for (const item of this.damagePool) {
       gsap.killTweensOf(item.text)
     }
+    for (const tween of this.pendingSkillHits) {
+      tween.kill()
+    }
 
     this.app?.destroy(true, { children: true })
     this.app = null
@@ -420,6 +451,7 @@ export class GameRenderer {
     this.playerSprite = null
     this.monsterPool = []
     this.damagePool = []
+    this.pendingSkillHits = []
     this.mounted = false
   }
 }

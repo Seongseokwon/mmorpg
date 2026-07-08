@@ -245,6 +245,11 @@ export const useBattleStore = defineStore('battle', () => {
     dealDamageToMonster(target.id, damage)
   }
 
+  /** 가장 가까운 몬스터와 실제 위치가 가까워 "겹쳐" 보이는 몬스터까지 함께 타격하는 광역 판정 */
+  function getCleaveTargets(target: Monster): Monster[] {
+    return sortedMonsters.value.filter((m) => Math.abs(m.x - target.x) <= SKILL_CLEAVE_RANGE)
+  }
+
   function useSkill(): void {
     const player = usePlayerStore()
     const skillStore = useSkillStore()
@@ -254,15 +259,17 @@ export const useBattleStore = defineStore('battle', () => {
     const skill = skillStore.getReadySkill()
     if (!skill) return
 
-    // 가장 가까운 몬스터와 실제 위치가 가까워 "겹쳐" 보이는 몬스터까지 함께 타격하는 광역 판정
-    const cleaveTargets = sortedMonsters.value.filter(
-      (m) => Math.abs(m.x - target.x) <= SKILL_CLEAVE_RANGE,
-    )
+    // aoeAll 스킬(예: 메테오 스톰)은 근접 판정 대신 생존한 몬스터 전원을 대상으로 한다
+    const targets = skill.aoeAll ? sortedMonsters.value : getCleaveTargets(target)
 
-    const hits = cleaveTargets.map((m) => {
-      const { damage: baseDamage } = rollDamage()
-      return { monsterId: m.id, damage: Math.floor(baseDamage * skill.damageMultiplier) }
-    })
+    // 대상마다 hitsPerTarget번 독립적으로 데미지를 굴려, 다단 히트 스킬이 매번 같은 값을
+    // 반복하지 않고 자연스러운 편차를 갖게 한다
+    const hits = targets.flatMap((m) =>
+      Array.from({ length: skill.hitsPerTarget }, () => {
+        const { damage: baseDamage } = rollDamage()
+        return { monsterId: m.id, damage: Math.floor(baseDamage * skill.damageMultiplier) }
+      }),
+    )
 
     skillStore.triggerCooldown(skill.id)
     battleEventBus.emit({ type: 'skill_use', skillId: skill.id, hits })

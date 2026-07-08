@@ -48,6 +48,10 @@ export interface Skill {
   cooldownMs: number
   damageMultiplier: number
   unlockStage: number
+  /** 대상 하나당 몇 번 타격하는지. 1이면 단일 히트(기존 스킬 동작과 동일) */
+  hitsPerTarget: number
+  /** true면 근접 범위(cleave) 대신 생존한 몬스터 전원을 대상으로 한다 */
+  aoeAll: boolean
 }
 
 export interface PlayerStats {
